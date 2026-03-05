@@ -57,43 +57,27 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         else onClose();
       } else {
         /* ── User login: call API ── */
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password
-          }),
+        const data = await loginUser({
+          email: form.email,
+          password: form.password
         });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || 'Login failed');
-        }
 
         // Make sure admin emails aren't sneaking in via user tab
         if (ADMIN_EMAILS.includes(form.email.toLowerCase())) {
           throw new Error('Use the Admin tab to login as admin.');
         }
 
-        localStorage.setItem('parkmate_user', JSON.stringify(data.user));
+        localStorage.setItem('parkmate_user', JSON.stringify(data.user || data));
         localStorage.setItem('parkmate_token', data.token);
         window.dispatchEvent(new CustomEvent('userLoggedIn'));
-        if (onLoginSuccess) onLoginSuccess(data.user, 'user');
+        if (onLoginSuccess) onLoginSuccess(data.user || data, 'user');
         else {
           onClose();
           window.location.reload();
         }
       }
     } catch (err) {
-      if (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource.') {
-        setError('Unable to reach the server. Please make sure the ParkMate backend is running on http://localhost:5000.');
-      } else {
-        setError(err.message || 'Invalid email or password. Please try again.');
-      }
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }

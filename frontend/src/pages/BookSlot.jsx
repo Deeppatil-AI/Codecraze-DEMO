@@ -109,18 +109,7 @@ const BookSlot = () => {
         slot_id: preselected?.id || preselected?._id || '',
       };
 
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || data.message || 'Booking failed.');
+      const data = await bookSlot(payload);
 
       // Store booking info for payment page
       localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount, bookingId: data.booking_id }));

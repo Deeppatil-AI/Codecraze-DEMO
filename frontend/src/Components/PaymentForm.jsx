@@ -57,36 +57,16 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
         amount: amount ?? booking.totalAmount ?? 0,
       };
 
-      const res = await fetch('/api/book-slot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Booking failed');
-      }
-
-      const bookingDoc = data.booking;
+      const data = await bookSlot(payload);
+      const bookingDoc = data.booking || data;
 
       // Record payment details (for admin analytics)
       try {
-        await fetch('/api/payments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            bookingId: bookingDoc?._id,
-            amount: payload.amount,
-            method,
-            upiId: method === 'upi' ? upiId : undefined,
-          }),
+        await makePayment({
+          bookingId: bookingDoc?._id || bookingDoc?.id,
+          amount: payload.amount,
+          method,
+          upiId: method === 'upi' ? upiId : undefined,
         });
       } catch (paymentErr) {
         console.error('Failed to record payment:', paymentErr);

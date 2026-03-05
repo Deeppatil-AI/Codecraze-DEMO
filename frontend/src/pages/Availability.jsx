@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StatsCard from '../Components/StatsCard';
 import { FaParking, FaCheckCircle, FaTimesCircle, FaSync, FaMapMarkerAlt, FaLayerGroup, FaArrowRight, FaRupeeSign } from 'react-icons/fa';
+import { getSlots } from '../services/api';
 
 const LOCATIONS = [
   'CityMall',
@@ -35,8 +36,7 @@ const Availability = () => {
     setError('');
     try {
       const floorNum = flr.replace(/\D/g, '') || 1;
-      const res = await fetch(`/api/slots?floor=${floorNum}`);
-      const data = await res.json();
+      const data = await getSlots({ floor: floorNum });
 
       const formattedSlots = (data.slots || []).map(s => ({
         id: s._id || s.slot_id || s.slotId,
@@ -257,8 +257,8 @@ const Availability = () => {
                       <span className="text-base">🅿️</span>
                       <span
                         className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isAvailable
-                            ? 'bg-emerald-600/10 text-emerald-700'
-                            : 'bg-red-600/10 text-red-700'
+                          ? 'bg-emerald-600/10 text-emerald-700'
+                          : 'bg-red-600/10 text-red-700'
                           }`}
                       >
                         {isAvailable ? <FaCheckCircle className="text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
