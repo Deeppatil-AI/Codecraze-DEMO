@@ -6,6 +6,7 @@ const StatsCard = ({ icon, label, value, color = 'purple', suffix = '' }) => {
     green:  'icon-green',
     red:    'icon-red',
     indigo: 'icon-indigo',
+    amber:  'icon-amber',
   }[color] || 'icon-purple';
 
   const valueColor = {

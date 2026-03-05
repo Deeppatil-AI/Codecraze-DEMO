@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FaCreditCard, FaMobileAlt, FaLock, FaCheckCircle } from 'react-icons/fa';
+import { bookSlot, makePayment } from '../services/api';
 
 const PhonePeIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -27,6 +28,8 @@ const PaymentForm = ({ booking, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [paid, setPaid] = useState(false);
 
+  const [txnId, setTxnId] = useState('');
+
   const formatCard = (val) =>
     val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
 
@@ -35,10 +38,51 @@ const PaymentForm = ({ booking, onSuccess }) => {
     return d.length >= 3 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setPaid(true); onSuccess?.(); }, 1800);
+    try {
+      // Get booking info and selected slot from localStorage
+      const storedBooking = JSON.parse(localStorage.getItem('parkeasy_booking') || '{}');
+      const storedSlot = JSON.parse(localStorage.getItem('parkeasy_selected_slot') || '{}');
+      const user = JSON.parse(localStorage.getItem('parkeasy_user') || '{}');
+
+      const duration = storedBooking.duration || 1;
+      const pricePerHr = storedSlot.price || 40;
+      const totalPrice = duration * pricePerHr;
+
+      // Step 1: Create booking in DB
+      const bookingRes = await bookSlot({
+        user_id: user._id || '',
+        slot_id: storedSlot.id || storedSlot._id || '',
+        full_name: storedBooking.fullName || user.name || '',
+        vehicle: storedBooking.vehicleNumber || '',
+        location: storedBooking.location || '',
+        floor: storedBooking.floor || 'Floor 1',
+        date: storedBooking.date || '',
+        time: storedBooking.time || '',
+        duration: parseInt(duration),
+        total: parseInt(totalPrice),
+      });
+
+      const bookingId = bookingRes.booking_id || '';
+
+      // Step 2: Process payment in DB
+      const paymentRes = await makePayment({
+        booking_id: bookingId,
+        amount: totalPrice,
+        method: method,
+      });
+
+      setTxnId(paymentRes.txn_id || `PE-${Date.now()}`);
+      setPaid(true);
+      onSuccess?.();
+    } catch (err) {
+      console.error('Payment failed:', err);
+      alert(err.message || 'Payment failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (paid) {
@@ -51,7 +95,7 @@ const PaymentForm = ({ booking, onSuccess }) => {
         <p className="text-[13px] text-gray-500 mb-6">Your slot is confirmed. Drive safely! 🚗</p>
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left">
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Transaction ID</p>
-          <p className="text-gray-800 font-mono font-bold text-[13px]">PE-{Date.now()}</p>
+          <p className="text-gray-800 font-mono font-bold text-[13px]">{txnId}</p>
         </div>
       </div>
     );

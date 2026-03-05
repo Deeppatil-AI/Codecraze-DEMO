@@ -1,21 +1,29 @@
 import { useState, useEffect } from 'react';
-import SlotCard from '../Components/SlotCard';
+import { useNavigate } from 'react-router-dom';
 import StatsCard from '../Components/StatsCard';
-import { FaParking, FaCheckCircle, FaTimesCircle, FaSync, FaMapMarkerAlt, FaLayerGroup } from 'react-icons/fa';
+import {
+  FaParking, FaCheckCircle, FaTimesCircle, FaSync,
+  FaMapMarkerAlt, FaLayerGroup, FaRupeeSign, FaArrowRight,
+  FaSearch, FaFilter, FaEye,
+} from 'react-icons/fa';
+import { getSlots } from '../services/api';
 
+/* ──────────────────── constants ──────────────────── */
 const LOCATIONS = [
+  'CityMall',
   'Downtown Parking Hub',
   'Airport Terminal A',
+  'Airport Terminal B',
   'Mall Central Parking',
-  'City Square',
-  'Tech Park',
+  'Tech Park Zone 1',
+  'Railway Station Lot',
 ];
-
 const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
 
-const generateSlots = () => {
+/* ──────────────────── fallback data ──────────────────── */
+const generateFallbackSlots = () => {
   const prices = [30, 40, 50, 60];
-  const rows = ['A', 'B', 'C'];
+  const rows = ['A', 'B', 'C', 'D'];
   const cols = [1, 2, 3, 4];
   return rows.flatMap((row) =>
     cols.map((col) => ({
@@ -27,64 +35,141 @@ const generateSlots = () => {
   );
 };
 
-const Availability = () => {
-  const [slots, setSlots]             = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [filter, setFilter]           = useState('all');
-  const [location, setLocation]       = useState(LOCATIONS[0]);
-  const [floor, setFloor]             = useState(FLOORS[0]);
+/* ──────────────────── fetch helper ──────────────────── */
+const fetchSlotsFromAPI = async (location, floor) => {
+  try {
+    const params = {};
+    if (location) params.location = location;
+    if (floor) params.floor = floor;
+    const res = await getSlots(params);
+    const slotsData = res.slots || res || [];
+    if (!Array.isArray(slotsData) || slotsData.length === 0) {
+      return generateFallbackSlots();
+    }
+    return slotsData.map((s) => ({
+      id: s._id || s.id,
+      slotId: s.slot_number || s.slotId || s._id,
+      status: s.status,
+      price: s.price,
+    }));
+  } catch {
+    return generateFallbackSlots();
+  }
+};
 
-  const loadSlots = (loc = location, flr = floor) => {
+/* ══════════════════════════════════════════════════
+   AVAILABILITY PAGE — View-only with "Book" CTA
+   ══════════════════════════════════════════════════ */
+const Availability = () => {
+  const navigate = useNavigate();
+
+  const [slots, setSlots]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [filter, setFilter]     = useState('all');
+  const [location, setLocation] = useState(LOCATIONS[0]);
+  const [floor, setFloor]       = useState(FLOORS[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hoveredSlot, setHoveredSlot] = useState(null);
+
+  /* ── load slots ── */
+  const loadSlots = async (loc = location, flr = floor) => {
     setLoading(true);
-    setTimeout(() => {
-      setSlots(generateSlots());
-      setLoading(false);
-    }, 600);
+    const data = await fetchSlotsFromAPI(loc, flr);
+    setSlots(data);
+    setLoading(false);
   };
 
   useEffect(() => { loadSlots(); }, []);
 
   const handleLocationChange = (e) => {
-    setLocation(e.target.value);
-    loadSlots(e.target.value, floor);
+    const v = e.target.value;
+    setLocation(v);
+    loadSlots(v, floor);
   };
 
   const handleFloorChange = (e) => {
-    setFloor(e.target.value);
-    loadSlots(location, e.target.value);
+    const v = e.target.value;
+    setFloor(v);
+    loadSlots(location, v);
   };
 
-  const filtered       = slots.filter((s) => filter === 'all' || s.status === filter);
+  /* ── navigate to Book Slot with pre-selected slot ── */
+  const handleBookSlot = (slot) => {
+    localStorage.setItem('parkeasy_preselected_slot', JSON.stringify({
+      ...slot,
+      location,
+      floor,
+    }));
+    navigate('/book');
+  };
+
+  /* ── derived data ── */
+  const searched = searchQuery
+    ? slots.filter((s) => s.slotId.toLowerCase().includes(searchQuery.toLowerCase()))
+    : slots;
+  const filtered = searched.filter((s) => filter === 'all' || s.status === filter);
   const totalSlots     = slots.length;
   const availableSlots = slots.filter((s) => s.status === 'available').length;
   const occupiedSlots  = slots.filter((s) => s.status === 'occupied').length;
+  const availPercent   = totalSlots > 0 ? Math.round((availableSlots / totalSlots) * 100) : 0;
 
+  /* ══════════════ RENDER ══════════════ */
   return (
     <div className="page-bg pt-[60px]">
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
+      {/* Background blurs */}
+      <div className="pointer-events-none fixed top-1/4 -left-32 w-96 h-96 bg-emerald-300/20 rounded-full blur-[100px]" />
+      <div className="pointer-events-none fixed bottom-1/4 -right-32 w-96 h-96 bg-violet-300/15 rounded-full blur-[100px]" />
 
-        {/* Header */}
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12 relative">
+
+        {/* ── Page Header ── */}
         <div className="mb-8">
-          {/* <span className="badge mb-3">🅿️ Live Parking Status</span> */}
-          <h1 className="text-[36px] sm:text-[44px] font-extrabold text-gray-900 tracking-tight leading-tight mt-2">
-            Slot <span className="gradient-text">Availability</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Status
+            </span>
+          </div>
+          <h1 className="text-[36px] sm:text-[44px] font-extrabold text-gray-900 tracking-tight leading-tight">
+            Check <span className="gradient-text">Availability</span>
           </h1>
-          <p className="text-gray-500 text-[14px] mt-2">
-            Showing slots at{' '}
-            <span className="text-violet-600 font-semibold">{location}</span>
-            {' · '}
-            <span className="text-violet-600 font-semibold">{floor}</span>
+          <p className="text-gray-500 text-[14px] mt-2 max-w-lg">
+            Browse real-time parking slot availability across all locations. Find the
+            perfect spot, then book it in seconds.
           </p>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        {/* ── Stats Row ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatsCard icon={<FaParking />}     label="Total Slots"  value={totalSlots}     color="purple" />
           <StatsCard icon={<FaCheckCircle />} label="Available"    value={availableSlots} color="green"  />
           <StatsCard icon={<FaTimesCircle />} label="Occupied"     value={occupiedSlots}  color="red"    />
+          <div className="card-static flex flex-col items-center justify-center py-4 px-3">
+            <div className="relative w-12 h-12 mb-1.5">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                <circle
+                  cx="18" cy="18" r="14" fill="none"
+                  stroke="url(#availGrad)" strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={`${availPercent * 0.88} 88`}
+                  className="transition-all duration-700"
+                />
+                <defs>
+                  <linearGradient id="availGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-gray-700">
+                {availPercent}%
+              </span>
+            </div>
+            <p className="text-[11px] font-semibold text-gray-500">Availability</p>
+          </div>
         </div>
 
-        {/* Location & Floor Dropdowns */}
+        {/* ── Location & Floor Selectors ── */}
         <div className="card-static px-6 py-5 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* Location */}
@@ -97,6 +182,7 @@ const Availability = () => {
                 <select
                   value={location}
                   onChange={handleLocationChange}
+                  id="availability-location-select"
                   className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-[14px] font-medium text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition cursor-pointer hover:border-violet-300"
                 >
                   {LOCATIONS.map((loc) => (
@@ -117,6 +203,7 @@ const Availability = () => {
                 <select
                   value={floor}
                   onChange={handleFloorChange}
+                  id="availability-floor-select"
                   className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-[14px] font-medium text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition cursor-pointer hover:border-violet-300"
                 >
                   {FLOORS.map((f) => (
@@ -129,22 +216,27 @@ const Availability = () => {
           </div>
         </div>
 
-        {/* Toolbar */}
+        {/* ── Toolbar ── */}
         <div className="card-static px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
-          {/* Legend */}
-          <div className="flex items-center gap-4 text-[13px] text-gray-500">
-            <span className="flex items-center gap-2 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              Available ({availableSlots})
-            </span>
-            <span className="flex items-center gap-2 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-              Occupied ({occupiedSlots})
-            </span>
+          {/* Left — Search + Legend */}
+          <div className="flex items-center gap-4 flex-wrap">
+
+            {/* Legend */}
+            <div className="flex items-center gap-3 text-[12px] text-gray-500">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Available ({availableSlots})
+              </span>
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                Occupied ({occupiedSlots})
+              </span>
+            </div>
           </div>
 
-          {/* Filter buttons */}
+          {/* Right — Filter + Refresh */}
           <div className="flex items-center gap-1.5">
+            <FaFilter className="text-gray-400 text-[10px] mr-1" />
             {['all', 'available', 'occupied'].map((f) => (
               <button
                 key={f}
@@ -169,7 +261,7 @@ const Availability = () => {
           </div>
         </div>
 
-        {/* Grid */}
+        {/* ── Slot Grid ── */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <span className="w-9 h-9 border-[3px] border-violet-200 border-t-violet-600 rounded-full animate-spin" />
@@ -179,14 +271,77 @@ const Availability = () => {
           <div className="text-center py-20">
             <p className="text-4xl mb-3">🅿️</p>
             <p className="text-[14px] font-semibold text-gray-500">No slots match the current filter.</p>
+            <button
+              onClick={() => { setFilter('all'); setSearchQuery(''); }}
+              className="mt-3 text-[13px] text-violet-600 font-semibold hover:text-violet-800 underline underline-offset-2 transition"
+            >
+              Clear filters
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {filtered.map((slot, i) => (
-              <div key={slot.id} className={`animate-fade-up`} style={{ animationDelay: `${i * 0.03}s` }}>
-                <SlotCard slot={slot} />
-              </div>
-            ))}
+            {filtered.map((slot, i) => {
+              const isAvailable = slot.status === 'available';
+              const isHovered = hoveredSlot === slot.id;
+              return (
+                <div
+                  key={slot.id}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${i * 0.03}s` }}
+                  onMouseEnter={() => setHoveredSlot(slot.id)}
+                  onMouseLeave={() => setHoveredSlot(null)}
+                >
+                  <div
+                    className={`relative p-4 flex flex-col gap-2.5 transition-all duration-200 ${
+                      isAvailable ? 'slot-available' : 'slot-occupied'
+                    } ${isAvailable && isHovered ? 'scale-[1.02] shadow-lg' : ''}`}
+                  >
+                    {/* Top row */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-base">🅿️</span>
+                      <span
+                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isAvailable
+                            ? 'bg-emerald-600/10 text-emerald-700'
+                            : 'bg-red-600/10 text-red-700'
+                        }`}
+                      >
+                        {isAvailable ? <FaCheckCircle className="text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
+                        {isAvailable ? 'Open' : 'Taken'}
+                      </span>
+                    </div>
+
+                    {/* Slot ID + Price */}
+                    <div>
+                      <p className={`font-bold text-[15px] tracking-tight leading-none ${isAvailable ? 'text-emerald-800' : 'text-red-800'}`}>
+                        {slot.slotId}
+                      </p>
+                      <p className={`text-[12px] mt-0.5 font-semibold flex items-center gap-0.5 ${isAvailable ? 'text-emerald-600' : 'text-red-500'}`}>
+                        <FaRupeeSign className="text-[10px]" />{slot.price}
+                        <span className="font-normal opacity-70">/hr</span>
+                      </p>
+                    </div>
+
+                    {/* Action */}
+                    {isAvailable ? (
+                      <button
+                        onClick={() => handleBookSlot(slot)}
+                        className="w-full mt-auto text-[12px] font-bold py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white transition-all duration-150 shadow-sm flex items-center justify-center gap-1.5"
+                      >
+                        Book This Slot <FaArrowRight className="text-[10px]" />
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="w-full mt-auto text-[12px] font-semibold py-1.5 rounded-lg bg-red-200/60 text-red-400 cursor-not-allowed"
+                      >
+                        Occupied
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -68,7 +68,10 @@ const ForgotPassword = () => {
     await new Promise((r) => setTimeout(r, 1400));
     setLoading(false);
     setStep(STEPS.DONE);
-    setTimeout(() => navigate('/'), 2000);
+    setTimeout(() => {
+      navigate('/');
+      window.dispatchEvent(new Event('openLogin'));
+    }, 2000);
   };
 
   const stepIndex = { [STEPS.EMAIL]: 1, [STEPS.OTP]: 2, [STEPS.RESET]: 3, [STEPS.DONE]: 3 };

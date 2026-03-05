@@ -4,6 +4,7 @@ import {
   FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash,
   FaCheckCircle, FaCar,
 } from 'react-icons/fa';
+import { registerUser } from '../services/api';
 
 const perks = [
   { icon: '🚗', text: 'Book parking slots in seconds' },
@@ -53,15 +54,22 @@ const Signup = () => {
     }
     setLoading(true);
     try {
-      await new Promise((res) => setTimeout(res, 1600));
+      const res = await registerUser({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
       localStorage.setItem(
         'parkeasy_user',
-        JSON.stringify({ email: form.email, name: form.name }),
+        JSON.stringify(res.user || { email: form.email, name: form.name }),
       );
       setSuccess(true);
-      setTimeout(() => navigate('/'), 1400);
-    } catch {
-      setError('Something went wrong. Please try again.');
+      setTimeout(() => {
+        navigate('/');
+        window.dispatchEvent(new Event('openLogin'));
+      }, 1400);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
