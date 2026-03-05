@@ -7,7 +7,7 @@ const SlotCard = ({ slot }) => {
   const isAvailable = status === 'available';
 
   const handleBook = () => {
-    localStorage.setItem('parkeasy_selected_slot', JSON.stringify(slot));
+    localStorage.setItem('parkmate_selected_slot', JSON.stringify(slot));
     navigate('/payment');
   };
 
@@ -17,11 +17,10 @@ const SlotCard = ({ slot }) => {
       <div className="flex items-center justify-between">
         <span className="text-base">🅿️</span>
         <span
-          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            isAvailable
+          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isAvailable
               ? 'bg-emerald-600/10 text-emerald-700'
               : 'bg-red-600/10 text-red-700'
-          }`}
+            }`}
         >
           {isAvailable
             ? <FaCheckCircle className="text-[9px]" />

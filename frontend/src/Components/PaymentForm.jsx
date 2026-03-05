@@ -19,7 +19,7 @@ const PaytmIcon = (props) => (
   </svg>
 );
 
-const PaymentForm = ({ booking, onSuccess }) => {
+const PaymentForm = ({ booking, amount, onSuccess }) => {
   const [method, setMethod] = useState('card');
   const [cardForm, setCardForm] = useState({ number: '', expiry: '', cvv: '', name: '' });
   const [upiId, setUpiId] = useState('');
@@ -35,10 +35,71 @@ const PaymentForm = ({ booking, onSuccess }) => {
     return d.length >= 3 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setPaid(true); onSuccess?.(); }, 1800);
+
+    try {
+      const token = localStorage.getItem('parkmate_token') || localStorage.getItem('parkeasy_token');
+      if (!token) {
+        alert("You must be logged in to book a slot.");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        slotId: booking.slotId,
+        vehicleNumber: booking.vehicleNumber || 'UNKNOWN',
+        amount: amount ?? booking.totalAmount ?? 0,
+      };
+
+      const res = await fetch('/api/book-slot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Booking failed');
+      }
+
+      const bookingDoc = data.booking;
+
+      // Record payment details (for admin analytics)
+      try {
+        await fetch('/api/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            bookingId: bookingDoc?._id,
+            amount: payload.amount,
+            method,
+            upiId: method === 'upi' ? upiId : undefined,
+          }),
+        });
+      } catch (paymentErr) {
+        console.error('Failed to record payment:', paymentErr);
+      }
+
+      // Clear temporary booking selection now that everything is confirmed
+      localStorage.removeItem('parkmate_booking');
+      localStorage.removeItem('parkmate_selected_slot');
+
+      setPaid(true);
+      onSuccess?.();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Error occurred while booking.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (paid) {
@@ -73,19 +134,18 @@ const PaymentForm = ({ booking, onSuccess }) => {
       {/* Method Toggle */}
       <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
         {[
-          { id: 'card', label: 'Card',  Icon: FaCreditCard },
-          { id: 'upi',  label: 'UPI',   Icon: FaMobileAlt  },
+          { id: 'card', label: 'Card', Icon: FaCreditCard },
+          { id: 'upi', label: 'UPI', Icon: FaMobileAlt },
         ].map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             id={`payment-tab-${id}`}
             onClick={() => setMethod(id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
-              method === id
-                ? 'bg-white text-violet-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${method === id
+              ? 'bg-white text-violet-700 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             <Icon className="text-[12px]" /> {label}
           </button>
@@ -168,9 +228,9 @@ const PaymentForm = ({ booking, onSuccess }) => {
             <p className="text-[11px] text-gray-400 mt-2">Supports PhonePe, GPay, Paytm & all UPI apps</p>
             <div className="flex gap-2 mt-3">
               {[
-                { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon  width="1.2em" height="1.2em" />, suffix: '@ybl',     color: '#6d28d9', bg: '#f5f3ff', border: '#7c3aed' },
-                { id: 'gpay',    label: 'GPay',     icon: <GooglePayIcon width="1.2em" height="1.2em" />, suffix: '@okicici', color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' },
-                { id: 'paytm',   label: 'Paytm',    icon: <PaytmIcon     width="1.2em" height="1.2em" />, suffix: '@paytm',   color: '#0d7377', bg: '#f0fdfa', border: '#14b8a6' },
+                { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon width="1.2em" height="1.2em" />, suffix: '@ybl', color: '#6d28d9', bg: '#f5f3ff', border: '#7c3aed' },
+                { id: 'gpay', label: 'GPay', icon: <GooglePayIcon width="1.2em" height="1.2em" />, suffix: '@okicici', color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' },
+                { id: 'paytm', label: 'Paytm', icon: <PaytmIcon width="1.2em" height="1.2em" />, suffix: '@paytm', color: '#0d7377', bg: '#f0fdfa', border: '#14b8a6' },
               ].map((app) => {
                 const isSelected = selectedUpiApp === app.id;
                 return (
@@ -187,11 +247,11 @@ const PaymentForm = ({ booking, onSuccess }) => {
                     }}
                     className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-[11px] font-bold"
                     style={{
-                      borderColor:  isSelected ? app.border : '#e5e7eb',
-                      background:   isSelected ? app.bg     : '#fff',
-                      color:        isSelected ? app.color  : '#6b7280',
-                      boxShadow:    isSelected ? `0 0 0 3px ${app.border}33` : 'none',
-                      transform:    isSelected ? 'translateY(-2px)' : 'none',
+                      borderColor: isSelected ? app.border : '#e5e7eb',
+                      background: isSelected ? app.bg : '#fff',
+                      color: isSelected ? app.color : '#6b7280',
+                      boxShadow: isSelected ? `0 0 0 3px ${app.border}33` : 'none',
+                      transform: isSelected ? 'translateY(-2px)' : 'none',
                     }}
                   >
                     <span className="flex items-center justify-center text-xl leading-none w-6 h-6">{app.icon}</span>

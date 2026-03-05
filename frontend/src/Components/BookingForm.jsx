@@ -67,7 +67,7 @@ const BookingForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    localStorage.setItem('parkeasy_booking', JSON.stringify({ ...form, totalAmount }));
+    localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount }));
     setTimeout(() => {
       setLoading(false);
       navigate('/book');

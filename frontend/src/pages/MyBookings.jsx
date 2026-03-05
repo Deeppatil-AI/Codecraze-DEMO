@@ -2,42 +2,58 @@ import { useState, useEffect } from 'react';
 import StatsCard from '../Components/StatsCard';
 import { FaBookmark, FaCheckCircle, FaClock, FaCalendarAlt, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-
-const MOCK_BOOKINGS = [
-  {
-    id: 'BK001', slotId: 'DT-003', location: 'Downtown Parking Hub',
-    date: '2026-03-05', time: '10:00', duration: 2, amount: 80,
-    status: 'active', vehicle: 'MH 12 AB 3456',
-  },
-  {
-    id: 'BK002', slotId: 'AP-017', location: 'Airport Terminal A',
-    date: '2026-03-03', time: '14:30', duration: 3, amount: 120,
-    status: 'completed', vehicle: 'MH 12 AB 3456',
-  },
-  {
-    id: 'BK003', slotId: 'ML-009', location: 'Mall Central Parking',
-    date: '2026-02-28', time: '18:00', duration: 1, amount: 40,
-    status: 'completed', vehicle: 'MH 12 AB 3456',
-  },
-];
+import { getBookings, cancelBooking } from '../services/api';
 
 const statusCfg = {
-  active:    { cls: 'status-active',    dot: 'bg-emerald-500', label: 'Active'    },
-  completed: { cls: 'status-completed', dot: 'bg-blue-500',    label: 'Completed' },
-  cancelled: { cls: 'status-cancelled', dot: 'bg-red-400',     label: 'Cancelled' },
+  active: { cls: 'status-active', dot: 'bg-emerald-500', label: 'Active' },
+  completed: { cls: 'status-completed', dot: 'bg-blue-500', label: 'Completed' },
+  cancelled: { cls: 'status-cancelled', dot: 'bg-red-400', label: 'Cancelled' },
 };
 
 const MyBookings = () => {
-  const [user, setUser]   = useState(null);
-  const [bookings]        = useState(MOCK_BOOKINGS);
+  const [user, setUser] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const stored = localStorage.getItem('parkeasy_user');
+    const stored = localStorage.getItem('parkmate_user') || localStorage.getItem('parkeasy_user');
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
-  const total     = bookings.length;
-  const active    = bookings.filter((b) => b.status === 'active').length;
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await getBookings();
+        // API returns { bookings: [...] }
+        const apiBookings = data.bookings || [];
+        setBookings(apiBookings);
+      } catch (err) {
+        setError(err.message || 'Failed to load bookings.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  const handleCancel = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    try {
+      await cancelBooking(bookingId);
+      // Refresh list after successful cancel
+      const data = await getBookings();
+      setBookings(data.bookings || []);
+    } catch (err) {
+      alert(err.message || 'Failed to cancel booking.');
+    }
+  };
+
+  const total = bookings.length;
+  const active = bookings.filter((b) => b.status === 'active').length;
   const completed = bookings.filter((b) => b.status === 'completed').length;
 
   /* ── Not logged in ── */
@@ -87,9 +103,9 @@ const MyBookings = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <StatsCard icon={<FaBookmark />}    label="Total Bookings"  value={total}     color="purple" />
-          <StatsCard icon={<FaClock />}       label="Active"          value={active}    color="green"  />
-          <StatsCard icon={<FaCheckCircle />} label="Completed"       value={completed} color="blue"   />
+          <StatsCard icon={<FaBookmark />} label="Total Bookings" value={total} color="purple" />
+          <StatsCard icon={<FaClock />} label="Active" value={active} color="green" />
+          <StatsCard icon={<FaCheckCircle />} label="Completed" value={completed} color="blue" />
         </div>
 
         {/* Bookings */}
@@ -99,65 +115,107 @@ const MyBookings = () => {
             <span className="text-[12px] text-gray-400">{total} total</span>
           </div>
 
-          <div className="card-static overflow-hidden">
-            {bookings.map((b, i) => {
-              const cfg = statusCfg[b.status] || statusCfg.completed;
-              return (
-                <div
-                  key={b.id}
-                  className={`px-6 py-5 row-hover animate-fade-up ${
-                    i < bookings.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      {/* Icon */}
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
-                      >
-                        📍
+          {loading ? (
+            <div className="card-static p-8 text-center text-[13px] text-gray-400">
+              Loading your bookings...
+            </div>
+          ) : error ? (
+            <div className="card-static p-8 text-center text-[13px] text-red-500">
+              {error}
+            </div>
+          ) : bookings.length === 0 ? (
+            <div className="card-static p-8 text-center text-[13px] text-gray-400">
+              You don&apos;t have any bookings yet.
+            </div>
+          ) : (
+            <div className="card-static overflow-hidden">
+              {bookings.map((b, i) => {
+                const cfg = statusCfg[b.status] || statusCfg.completed;
+                const slotId = b.slotId || b.slot_id || 'N/A';
+                const amount = typeof b.amount === 'number' ? b.amount : (b.totalAmount || '');
+                const vehicle = b.vehicleNumber || b.vehicle || '—';
+                const startedAt = b.entryTime || b.createdAt;
+
+                return (
+                  <div
+                    key={b._id || b.id || i}
+                    className={`px-6 py-5 row-hover animate-fade-up ${i < bookings.length - 1 ? 'border-b border-gray-100' : ''
+                      }`}
+                    style={{ animationDelay: `${i * 0.08}s` }}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-start gap-3.5 min-w-0">
+                        {/* Icon */}
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
+                          style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
+                        >
+                          📍
+                        </div>
+
+                        {/* Details */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <p className="font-semibold text-gray-900 text-[14px] truncate">
+                              <FaMapMarkerAlt className="inline mr-1 text-violet-400 text-[11px]" />
+                              {b.location || 'ParkMate Hub'}
+                            </p>
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.cls}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                              {cfg.label}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-gray-400 mt-1">
+                            Slot{' '}
+                            <span className="text-violet-600 font-mono font-semibold">{slotId}</span>
+                            {' · '}
+                            {amount !== '' && (
+                              <>
+                                <span className="font-semibold text-emerald-600">₹{amount}</span>
+                                {' · '}
+                              </>
+                            )}
+                            <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">
+                              {vehicle}
+                            </span>
+                          </p>
+                          {startedAt && (
+                            <div className="flex items-center gap-4 mt-1.5 text-[11px] text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <FaCalendarAlt className="text-violet-400 text-[10px]" />
+                                {new Date(startedAt).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Details */}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <p className="font-semibold text-gray-900 text-[14px] truncate">{b.location}</p>
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.cls}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                            {cfg.label}
-                          </span>
-                        </div>
-                        <p className="text-[12px] text-gray-400 mt-1">
-                          Slot{' '}
-                          <span className="text-violet-600 font-mono font-semibold">{b.slotId}</span>
-                          {' · '}
-                          <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{b.vehicle}</span>
-                        </p>
-                        <div className="flex items-center gap-4 mt-1.5 text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <FaCalendarAlt className="text-violet-400 text-[10px]" />
-                            {b.date} · {b.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <FaClock className="text-blue-400 text-[10px]" />
-                            {b.duration}h
-                          </span>
-                        </div>
+                      {/* Amount + actions */}
+                      <div className="text-right flex-shrink-0">
+                        {amount !== '' && (
+                          <p className="text-[22px] font-extrabold gradient-text tracking-tight leading-none">
+                            ₹{amount}
+                          </p>
+                        )}
+                        {b._id && (
+                          <p className="text-[10px] text-gray-400 font-mono mt-1">#{b._id}</p>
+                        )}
+                        {b.status === 'active' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancel(b._id)}
+                            className="mt-2 inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
-                    </div>
-
-                    {/* Amount */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-[22px] font-extrabold gradient-text tracking-tight leading-none">₹{b.amount}</p>
-                      <p className="text-[10px] text-gray-400 font-mono mt-1">#{b.id}</p>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

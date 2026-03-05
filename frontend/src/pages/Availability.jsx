@@ -13,33 +13,40 @@ const LOCATIONS = [
 
 const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
 
-const generateSlots = () => {
-  const prices = [30, 40, 50, 60];
-  const rows = ['A', 'B', 'C'];
-  const cols = [1, 2, 3, 4];
-  return rows.flatMap((row) =>
-    cols.map((col) => ({
-      id: `${row}${col}`,
-      slotId: `${row}${col}`,
-      status: Math.random() > 0.45 ? 'available' : 'occupied',
-      price: prices[Math.floor(Math.random() * prices.length)],
-    }))
-  );
-};
+// Generate static prices and randomize locally if price isn't from DB
+const defaultPrices = [30, 40, 50, 60];
 
 const Availability = () => {
-  const [slots, setSlots]             = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [filter, setFilter]           = useState('all');
-  const [location, setLocation]       = useState(LOCATIONS[0]);
-  const [floor, setFloor]             = useState(FLOORS[0]);
+  const [slots, setSlots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [location, setLocation] = useState(LOCATIONS[0]);
+  const [floor, setFloor] = useState(FLOORS[0]);
 
-  const loadSlots = (loc = location, flr = floor) => {
+  const loadSlots = async (loc = location, flr = floor) => {
     setLoading(true);
-    setTimeout(() => {
-      setSlots(generateSlots());
+    try {
+      // The backend API takes 'floor' as a query parameter (e.g., 1, 2, 3)
+      // Since map UI is "Floor 1", "Floor 2", we extract that digit.
+      const floorNum = flr.replace(/\D/g, '') || 1;
+      const res = await fetch(`/api/slots?floor=${floorNum}`);
+      const data = await res.json();
+
+      // Ensure mapped correctly
+      const formattedSlots = (data.slots || []).map(s => ({
+        id: s._id || s.slot_id || s.slotId,
+        slotId: s.slotId,
+        status: s.status,
+        price: s.pricePerHour || defaultPrices[Math.floor(Math.random() * defaultPrices.length)],
+        floor: s.floor
+      }));
+      setSlots(formattedSlots);
+    } catch (err) {
+      console.error("Failed to load slots:", err);
+      setSlots([]); // Fallback to empty
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   useEffect(() => { loadSlots(); }, []);
@@ -54,10 +61,10 @@ const Availability = () => {
     loadSlots(location, e.target.value);
   };
 
-  const filtered       = slots.filter((s) => filter === 'all' || s.status === filter);
-  const totalSlots     = slots.length;
+  const filtered = slots.filter((s) => filter === 'all' || s.status === filter);
+  const totalSlots = slots.length;
   const availableSlots = slots.filter((s) => s.status === 'available').length;
-  const occupiedSlots  = slots.filter((s) => s.status === 'occupied').length;
+  const occupiedSlots = slots.filter((s) => s.status === 'occupied').length;
 
   return (
     <div className="page-bg pt-[60px]">
@@ -79,9 +86,9 @@ const Availability = () => {
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <StatsCard icon={<FaParking />}     label="Total Slots"  value={totalSlots}     color="purple" />
-          <StatsCard icon={<FaCheckCircle />} label="Available"    value={availableSlots} color="green"  />
-          <StatsCard icon={<FaTimesCircle />} label="Occupied"     value={occupiedSlots}  color="red"    />
+          <StatsCard icon={<FaParking />} label="Total Slots" value={totalSlots} color="purple" />
+          <StatsCard icon={<FaCheckCircle />} label="Available" value={availableSlots} color="green" />
+          <StatsCard icon={<FaTimesCircle />} label="Occupied" value={occupiedSlots} color="red" />
         </div>
 
         {/* Location & Floor Dropdowns */}
@@ -149,11 +156,10 @@ const Availability = () => {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold capitalize transition-all duration-150 ${
-                  filter === f
+                className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold capitalize transition-all duration-150 ${filter === f
                     ? 'text-white shadow-sm'
                     : 'text-gray-500 bg-white border border-gray-200 hover:text-violet-700 hover:border-violet-200'
-                }`}
+                  }`}
                 style={filter === f ? { background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' } : {}}
               >
                 {f}

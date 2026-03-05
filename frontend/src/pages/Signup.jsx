@@ -4,6 +4,7 @@ import {
   FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash,
   FaCheckCircle, FaCar,
 } from 'react-icons/fa';
+import { requestSignupOtp, verifySignupOtp } from '../services/api';
 
 const perks = [
   { icon: '🚗', text: 'Book parking slots in seconds' },
@@ -12,16 +13,20 @@ const perks = [
   { icon: '📱', text: 'Instant SMS & email confirmations' },
 ];
 
+const STEPS = { FORM: 'form', OTP: 'otp', SUCCESS: 'success' };
+
 const Signup = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '', email: '', password: '', confirm: '',
   });
-  const [showPass, setShowPass]       = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState('');
-  const [success, setSuccess]         = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState(STEPS.FORM);
+  const [otp, setOtp] = useState('');
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -29,10 +34,10 @@ const Signup = () => {
     const p = form.password;
     if (!p) return 0;
     let score = 0;
-    if (p.length >= 8)               score++;
-    if (/[A-Z]/.test(p))             score++;
-    if (/[0-9]/.test(p))             score++;
-    if (/[^A-Za-z0-9]/.test(p))     score++;
+    if (p.length >= 8) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^A-Za-z0-9]/.test(p)) score++;
     return score; // 0-4
   };
 
@@ -53,15 +58,15 @@ const Signup = () => {
     }
     setLoading(true);
     try {
-      await new Promise((res) => setTimeout(res, 1600));
-      localStorage.setItem(
-        'parkeasy_user',
-        JSON.stringify({ email: form.email, name: form.name }),
-      );
-      setSuccess(true);
-      setTimeout(() => navigate('/'), 1400);
-    } catch {
-      setError('Something went wrong. Please try again.');
+      const payload = {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      };
+      await requestSignupOtp(payload);
+      setStep(STEPS.OTP);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -131,7 +136,10 @@ const Signup = () => {
             <div className="p-8">
               <div className="mb-7">
                 <h1 className="text-[22px] font-extrabold text-gray-900 tracking-tight">Create your account</h1>
-                <p className="text-[13px] text-gray-400 mt-1">Start parking smarter in under 2 minutes.</p>
+                <p className="text-[13px] text-gray-400 mt-1">
+                  {step === STEPS.FORM && 'Start parking smarter in under 2 minutes.'}
+                  {step === STEPS.OTP && `We’ve sent a 6‑digit code to ${form.email}. Enter it to verify your account.`}
+                </p>
               </div>
 
               {success ? (
@@ -148,6 +156,7 @@ const Signup = () => {
                     </div>
                   )}
 
+                  {step === STEPS.FORM && (
                   <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Full Name */}
                     <div>
@@ -260,6 +269,63 @@ const Signup = () => {
                       ) : 'Create Account →'}
                     </button>
                   </form>
+                  )}
+
+                  {step === STEPS.OTP && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setError('');
+                        if (otp.trim().length < 6) {
+                          setError('Please enter the 6-digit code sent to your email.');
+                          return;
+                        }
+                        setLoading(true);
+                        try {
+                          const data = await verifySignupOtp({ email: form.email, otp: otp.trim() });
+                          if (!data?.token || !data?.user) {
+                            throw new Error('Unexpected server response. Please try again.');
+                          }
+                          localStorage.setItem('parkmate_user', JSON.stringify(data.user));
+                          localStorage.setItem('parkmate_token', data.token);
+                          setSuccess(true);
+                          setTimeout(() => navigate('/'), 1400);
+                        } catch (err) {
+                          setError(err.message || 'Invalid or expired code. Please try again.');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">
+                          Enter 6-digit verification code
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                          className="input-field text-center tracking-[0.4em] font-mono text-[16px]"
+                          placeholder="••••••"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                      >
+                        {loading ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Verifying…
+                          </>
+                        ) : 'Verify & Create Account →'}
+                      </button>
+                    </form>
+                  )}
 
                   <p className="mt-6 text-center text-[12px] text-gray-400">
                     Already have an account?{' '}

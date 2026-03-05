@@ -30,9 +30,9 @@ const features = [
 
 const stats = [
   { value: '1,200+', label: 'Parking Slots' },
-  { value: '50K+',   label: 'Happy Drivers' },
-  { value: '99.9%',  label: 'Uptime' },
-  { value: '4.9 ★',  label: 'Avg. Rating' },
+  { value: '50K+', label: 'Happy Drivers' },
+  { value: '99.9%', label: 'Uptime' },
+  { value: '4.9 ★', label: 'Avg. Rating' },
 ];
 
 const Hero = () => (
@@ -74,7 +74,7 @@ const Hero = () => (
             Book a Slot <FaArrowRight className="text-xs opacity-80" />
           </Link>
           <Link
-            to="/book"
+            to="/availability"
             id="hero-availability-btn"
             className="btn-ghost text-[15px] px-7 py-3.5 rounded-xl !bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
           >

@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaTimes, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const LoginModal = ({ isOpen, onClose }) => {
-  const [form, setForm]               = useState({ email: '', password: '' });
-  const [showPass, setShowPass]       = useState(false);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState('');
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
@@ -16,12 +16,33 @@ const LoginModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      await new Promise((res) => setTimeout(res, 1500));
-      localStorage.setItem('parkeasy_user', JSON.stringify({ email: form.email, name: 'ParkEasy User' }));
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      localStorage.setItem('parkmate_user', JSON.stringify(data.user));
+      localStorage.setItem('parkmate_token', data.token);
       onClose();
       window.location.reload();
-    } catch {
-      setError('Invalid email or password. Please try again.');
+    } catch (err) {
+      if (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource.') {
+        setError('Unable to reach the server. Please make sure the ParkMate backend is running on http://localhost:5000.');
+      } else {
+        setError(err.message || 'Invalid email or password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -122,20 +143,20 @@ const LoginModal = ({ isOpen, onClose }) => {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Signing in...
                 </>
-              ) : 'Login to ParkEasy'}
+              ) : 'Login to ParkMate'}
             </button>
           </form>
 
-            <p className="mt-5 text-center text-[12px] text-gray-400">
-              Don't have an account?{' '}
-              <Link
-                to="/signup"
-                onClick={onClose}
-                className="text-violet-600 hover:text-violet-800 font-bold transition"
-              >
-                Sign Up
-              </Link>
-            </p>
+          <p className="mt-5 text-center text-[12px] text-gray-400">
+            Don't have an account?{' '}
+            <Link
+              to="/signup"
+              onClick={onClose}
+              className="text-violet-600 hover:text-violet-800 font-bold transition"
+            >
+              Sign Up
+            </Link>
+          </p>
         </div>
       </div>
     </div>

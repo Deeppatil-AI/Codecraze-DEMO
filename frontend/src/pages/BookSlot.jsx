@@ -21,19 +21,8 @@ const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
 const DURATIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
 const RATE_PER_HOUR = 40;
 
-const generateSlots = () => {
-  const prices = [30, 40, 50, 60];
-  const rows = ['A', 'B', 'C', 'D'];
-  const cols = [1, 2, 3, 4];
-  return rows.flatMap((row) =>
-    cols.map((col) => ({
-      id: `${row}${col}`,
-      slotId: `${row}${col}`,
-      status: Math.random() > 0.4 ? 'available' : 'occupied',
-      price: prices[Math.floor(Math.random() * prices.length)],
-    }))
-  );
-};
+// Generate random prices as fallback
+const defaultPrices = [30, 40, 50, 60];
 
 /* ──────────────────── helpers ──────────────────── */
 const SelectWrapper = ({ icon: Icon, children }) => (
@@ -80,31 +69,58 @@ const BookSlot = () => {
   };
 
   /* ── step 1 → 2 ── */
-  const handleFindSlots = (e) => {
+  const handleFindSlots = async (e) => {
     e.preventDefault();
     setLoading(true);
-    localStorage.setItem('parkeasy_booking', JSON.stringify({ ...form, totalAmount }));
-    setTimeout(() => {
-      setSlots(generateSlots());
-      setLoading(false);
+    localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount }));
+
+    try {
+      const floorNum = form.floor.replace(/\D/g, '') || 1;
+      const res = await fetch(`/api/slots?floor=${floorNum}`);
+      const data = await res.json();
+
+      const formattedSlots = (data.slots || []).map(s => ({
+        id: s._id || s.slot_id || s.slotId,
+        slotId: s.slotId,
+        status: s.status,
+        price: s.pricePerHour || defaultPrices[Math.floor(Math.random() * defaultPrices.length)],
+      }));
+      setSlots(formattedSlots);
       setStep(2);
-    }, 800);
+    } catch (err) {
+      console.error("Failed to fetch slots:", err);
+      // fallback handling could go here
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ── refresh slots ── */
-  const refreshSlots = () => {
+  const refreshSlots = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setSlots(generateSlots());
+    try {
+      const floorNum = form.floor.replace(/\D/g, '') || 1;
+      const res = await fetch(`/api/slots?floor=${floorNum}`);
+      const data = await res.json();
+      const formattedSlots = (data.slots || []).map(s => ({
+        id: s._id || s.slot_id || s.slotId,
+        slotId: s.slotId,
+        status: s.status,
+        price: s.pricePerHour || defaultPrices[Math.floor(Math.random() * defaultPrices.length)],
+      }));
+      setSlots(formattedSlots);
+    } catch (err) {
+      console.error("Failed to refresh slots:", err);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   /* ── book a specific slot ── */
   const handleBookSlot = (slot) => {
-    const booking = { ...form, totalAmount: slot.price * parseInt(form.duration || '1', 10) };
-    localStorage.setItem('parkeasy_booking', JSON.stringify(booking));
-    localStorage.setItem('parkeasy_selected_slot', JSON.stringify(slot));
+    const booking = { ...form, totalAmount: slot.price * parseInt(form.duration || '1', 10), slotId: slot.slotId };
+    localStorage.setItem('parkmate_booking', JSON.stringify(booking));
+    localStorage.setItem('parkmate_selected_slot', JSON.stringify(slot));
     navigate('/payment');
   };
 
@@ -140,11 +156,10 @@ const BookSlot = () => {
           {/* Step 1 */}
           <div className="flex items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${
-                step >= 1
-                  ? 'text-white shadow-md'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${step >= 1
+                ? 'text-white shadow-md'
+                : 'bg-gray-200 text-gray-500'
+                }`}
               style={step >= 1 ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' } : {}}
             >
               {step > 1 ? <FaCheckCircle className="text-[14px]" /> : '1'}
@@ -168,11 +183,10 @@ const BookSlot = () => {
           {/* Step 2 */}
           <div className="flex items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${
-                step >= 2
-                  ? 'text-white shadow-md'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${step >= 2
+                ? 'text-white shadow-md'
+                : 'bg-gray-200 text-gray-500'
+                }`}
               style={step >= 2 ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' } : {}}
             >
               2
@@ -352,9 +366,9 @@ const BookSlot = () => {
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <StatsCard icon={<FaParking />}     label="Total Slots"  value={totalSlots}     color="purple" />
-              <StatsCard icon={<FaCheckCircle />} label="Available"    value={availableSlots} color="green"  />
-              <StatsCard icon={<FaTimesCircle />} label="Occupied"     value={occupiedSlots}  color="red"    />
+              <StatsCard icon={<FaParking />} label="Total Slots" value={totalSlots} color="purple" />
+              <StatsCard icon={<FaCheckCircle />} label="Available" value={availableSlots} color="green" />
+              <StatsCard icon={<FaTimesCircle />} label="Occupied" value={occupiedSlots} color="red" />
             </div>
 
             {/* Toolbar */}
@@ -377,11 +391,10 @@ const BookSlot = () => {
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold capitalize transition-all duration-150 ${
-                      filter === f
-                        ? 'text-white shadow-sm'
-                        : 'text-gray-500 bg-white border border-gray-200 hover:text-violet-700 hover:border-violet-200'
-                    }`}
+                    className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold capitalize transition-all duration-150 ${filter === f
+                      ? 'text-white shadow-sm'
+                      : 'text-gray-500 bg-white border border-gray-200 hover:text-violet-700 hover:border-violet-200'
+                      }`}
                     style={filter === f ? { background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' } : {}}
                   >
                     {f}
@@ -423,11 +436,10 @@ const BookSlot = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-base">🅿️</span>
                           <span
-                            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              isAvailable
-                                ? 'bg-emerald-600/10 text-emerald-700'
-                                : 'bg-red-600/10 text-red-700'
-                            }`}
+                            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isAvailable
+                              ? 'bg-emerald-600/10 text-emerald-700'
+                              : 'bg-red-600/10 text-red-700'
+                              }`}
                           >
                             {isAvailable ? <FaCheckCircle className="text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
                             {isAvailable ? 'Open' : 'Taken'}

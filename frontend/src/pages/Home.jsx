@@ -90,7 +90,7 @@ const Home = () => (
               Book Slot →
             </Link>
             <Link
-              to="/book"
+              to="/availability"
               className="inline-flex items-center justify-center gap-2 border-2 border-white/25 hover:border-white/50 text-white/85 hover:text-white font-semibold text-[14px] px-7 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
             >
               View Parking Map

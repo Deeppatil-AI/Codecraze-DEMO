@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCar, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
+import { requestResetOtp, verifyResetOtp, resetPasswordWithOtp } from '../services/api';
 
 const STEPS = { EMAIL: 'email', OTP: 'otp', RESET: 'reset', DONE: 'done' };
 
@@ -29,10 +30,15 @@ const ForgotPassword = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setLoading(false);
-    setStep(STEPS.OTP);
-    setResendTimer(30);
+    try {
+      await requestResetOtp({ email });
+      setStep(STEPS.OTP);
+      setResendTimer(30);
+    } catch (err) {
+      setError(err.message || 'Failed to send code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpChange = (val, idx) => {
@@ -54,9 +60,14 @@ const ForgotPassword = () => {
     setError('');
     if (otp.join('').length < 6) { setError('Please enter all 6 digits.'); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    setStep(STEPS.RESET);
+    try {
+      await verifyResetOtp({ email, otp: otp.join('') });
+      setStep(STEPS.RESET);
+    } catch (err) {
+      setError(err.message || 'Invalid or expired code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetPassword = async (e) => {
@@ -65,10 +76,15 @@ const ForgotPassword = () => {
     if (newPass !== confirmPass) { setError('Passwords do not match.'); return; }
     if (newPass.length < 6) { setError('Password must be at least 6 characters.'); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setLoading(false);
-    setStep(STEPS.DONE);
-    setTimeout(() => navigate('/'), 2000);
+    try {
+      await resetPasswordWithOtp({ email, otp: otp.join(''), password: newPass });
+      setStep(STEPS.DONE);
+      setTimeout(() => navigate('/'), 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const stepIndex = { [STEPS.EMAIL]: 1, [STEPS.OTP]: 2, [STEPS.RESET]: 3, [STEPS.DONE]: 3 };

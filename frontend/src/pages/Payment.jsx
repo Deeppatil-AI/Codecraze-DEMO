@@ -1,27 +1,34 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PaymentForm from '../Components/PaymentForm';
 import { FaParking, FaClock, FaRupeeSign, FaMapMarkerAlt, FaCar, FaShieldAlt } from 'react-icons/fa';
 
 const Payment = () => {
-  const [slot, setSlot]       = useState(null);
+  const [slot, setSlot] = useState(null);
   const [booking, setBooking] = useState(null);
 
   useEffect(() => {
-    const s = localStorage.getItem('parkeasy_selected_slot');
-    const b = localStorage.getItem('parkeasy_booking');
-    if (s) setSlot(JSON.parse(s));
-    if (b) setBooking(JSON.parse(b));
+    const s = localStorage.getItem('parkmate_selected_slot');
+    const b = localStorage.getItem('parkmate_booking');
+
+    if (s && b) {
+      setSlot(JSON.parse(s));
+      setBooking(JSON.parse(b));
+    } else {
+      setSlot(null);
+      setBooking(null);
+    }
   }, []);
 
-  const duration   = booking?.duration || 1;
-  const pricePerHr = slot?.price || 40;
-  const totalPrice = duration * pricePerHr;
+  const duration = booking?.duration || 0;
+  const pricePerHr = slot?.price || 0;
+  const totalPrice = duration && pricePerHr ? duration * pricePerHr : 0;
 
   const rows = [
-    { Icon: FaParking,      bg: 'bg-violet-100',  color: 'text-violet-600', label: 'Slot Number', value: slot?.slotId || 'P-001' },
-    { Icon: FaMapMarkerAlt, bg: 'bg-blue-100',    color: 'text-blue-600',   label: 'Location',    value: booking?.location || 'Downtown Parking Hub' },
-    { Icon: FaClock,        bg: 'bg-indigo-100',  color: 'text-indigo-600', label: 'Duration',    value: `${duration} hour${duration > 1 ? 's' : ''}` },
-    { Icon: FaRupeeSign,    bg: 'bg-emerald-100', color: 'text-emerald-600',label: 'Rate',        value: `₹${pricePerHr} / hour` },
+    { Icon: FaParking, bg: 'bg-violet-100', color: 'text-violet-600', label: 'Slot Number', value: slot?.slotId || 'P-001' },
+    { Icon: FaMapMarkerAlt, bg: 'bg-blue-100', color: 'text-blue-600', label: 'Location', value: booking?.location || 'Downtown Parking Hub' },
+    { Icon: FaClock, bg: 'bg-indigo-100', color: 'text-indigo-600', label: 'Duration', value: `${duration} hour${duration > 1 ? 's' : ''}` },
+    { Icon: FaRupeeSign, bg: 'bg-emerald-100', color: 'text-emerald-600', label: 'Rate', value: `₹${pricePerHr} / hour` },
   ];
 
   return (
@@ -47,29 +54,41 @@ const Payment = () => {
                 📋 Booking Summary
               </p>
 
-              <div className="space-y-4">
-                {rows.map((r, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl ${r.bg} flex items-center justify-center flex-shrink-0`}>
-                      <r.Icon className={`${r.color} text-[13px]`} />
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-gray-400 font-medium leading-none mb-0.5">{r.label}</p>
-                      <p className="text-[13px] text-gray-800 font-semibold leading-snug">{r.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <hr className="divider" />
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[12px] text-gray-400 font-medium">Total Amount</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Incl. taxes & fees</p>
+              {!slot || !booking ? (
+                <div className="py-6 text-center text-[13px] text-gray-400">
+                  No booking selected yet.{' '}
+                  <Link to="/book" className="text-violet-600 font-semibold hover:text-violet-800">
+                    Book a slot first
+                  </Link>
+                  .
                 </div>
-                <p className="text-[30px] font-extrabold gradient-text tracking-tight">₹{totalPrice}</p>
-              </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {rows.map((r, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl ${r.bg} flex items-center justify-center flex-shrink-0`}>
+                          <r.Icon className={`${r.color} text-[13px]`} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-gray-400 font-medium leading-none mb-0.5">{r.label}</p>
+                          <p className="text-[13px] text-gray-800 font-semibold leading-snug">{r.value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <hr className="divider" />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[12px] text-gray-400 font-medium">Total Amount</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Incl. taxes & fees</p>
+                    </div>
+                    <p className="text-[30px] font-extrabold gradient-text tracking-tight">₹{totalPrice}</p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Vehicle */}
@@ -90,7 +109,7 @@ const Payment = () => {
 
           {/* Payment Form */}
           <div className="lg:col-span-3">
-            <PaymentForm booking={booking} />
+            <PaymentForm booking={booking} amount={totalPrice} />
           </div>
         </div>
       </div>
