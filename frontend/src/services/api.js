@@ -1,8 +1,10 @@
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const API = axios.create({
-  // Use relative /api path so Vite dev proxy forwards to the Flask backend.
-  baseURL: '/api',
+  // Use VITE_API_URL if defined (for production), otherwise fall back to /api
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,7 +26,7 @@ API.interceptors.request.use(
 
 // Separate axios instance for admin so admin auth does not overwrite customer auth
 const AdminAPI = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
