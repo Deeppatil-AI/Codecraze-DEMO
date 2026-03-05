@@ -4,11 +4,7 @@ import {
   FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash,
   FaCheckCircle, FaCar, FaArrowLeft
 } from 'react-icons/fa';
-<<<<<<< HEAD
 import { requestSignupOtp, verifySignupOtp } from '../services/api';
-=======
-import { registerUser, sendSignupOtp } from '../services/api';
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
 const perks = [
   { icon: '🚗', text: 'Book parking slots in seconds' },
@@ -17,36 +13,21 @@ const perks = [
   { icon: '📱', text: 'Instant SMS & email confirmations' },
 ];
 
-<<<<<<< HEAD
 const STEPS = { FORM: 'form', OTP: 'otp', SUCCESS: 'success' };
-=======
-const STEPS = {
-  INFO: 'info',
-  OTP: 'otp',
-};
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(STEPS.INFO);
   const [form, setForm] = useState({
     name: '', email: '', password: '', confirm: '',
   });
-<<<<<<< HEAD
-=======
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
+
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-<<<<<<< HEAD
   const [step, setStep] = useState(STEPS.FORM);
   const [otp, setOtp] = useState('');
-=======
-  const otpRefs = useRef([]);
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -78,7 +59,6 @@ const Signup = () => {
     }
     setLoading(true);
     try {
-<<<<<<< HEAD
       const payload = {
         name: form.name,
         email: form.email,
@@ -88,12 +68,6 @@ const Signup = () => {
       setStep(STEPS.OTP);
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
-=======
-      await sendSignupOtp({ email: form.email });
-      setStep(STEPS.OTP);
-    } catch (err) {
-      setError(err.message || 'Failed to send OTP. Please try again.');
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
     } finally {
       setLoading(false);
     }
@@ -209,18 +183,10 @@ const Signup = () => {
               )}
 
               <div className="mb-7">
-<<<<<<< HEAD
                 <h1 className="text-[22px] font-extrabold text-gray-900 tracking-tight">Create your account</h1>
                 <p className="text-[13px] text-gray-400 mt-1">
                   {step === STEPS.FORM && 'Start parking smarter in under 2 minutes.'}
                   {step === STEPS.OTP && `We’ve sent a 6‑digit code to ${form.email}. Enter it to verify your account.`}
-=======
-                <h1 className="text-[22px] font-extrabold text-gray-900 tracking-tight">
-                  {success ? 'Account created' : step === STEPS.INFO ? 'Create your account' : 'Verify your email'}
-                </h1>
-                <p className="text-[13px] text-gray-400 mt-1">
-                  {success ? 'Redirecting to your dashboard...' : step === STEPS.INFO ? 'Start parking smarter in under 2 minutes.' : `We've sent a code to ${form.email}`}
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
                 </p>
               </div>
 
@@ -237,71 +203,7 @@ const Signup = () => {
                     </div>
                   )}
 
-<<<<<<< HEAD
                   {step === STEPS.FORM && (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Full Name */}
-                    <div>
-                      <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Full Name</label>
-                      <div className="relative">
-                        <FaUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
-                        <input
-                          type="text" name="name" value={form.name}
-                          onChange={handleChange} placeholder="John Doe" required
-                          className="input-field input-field-icon" id="signup-name"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                      <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Email</label>
-                      <div className="relative">
-                        <FaEnvelope className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
-                        <input
-                          type="email" name="email" value={form.email}
-                          onChange={handleChange} placeholder="you@example.com" required
-                          className="input-field input-field-icon" id="signup-email"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Password */}
-                    <div>
-                      <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Password</label>
-                      <div className="relative">
-                        <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
-                        <input
-                          type={showPass ? 'text' : 'password'} name="password"
-                          value={form.password} onChange={handleChange}
-                          placeholder="••••••••" required
-                          className="input-field input-field-icon pr-10" id="signup-password"
-                        />
-                        <button
-                          type="button" onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition text-[11px]"
-                        >
-                          {showPass ? <FaEyeSlash /> : <FaEye />}
-                        </button>
-                      </div>
-
-                      {/* Strength meter */}
-                      {form.password && (
-                        <div className="mt-2">
-                          <div className="flex gap-1 mb-1">
-                            {[1, 2, 3, 4].map((n) => (
-                              <div
-                                key={n}
-                                className="h-1 flex-1 rounded-full transition-all duration-300"
-                                style={{ background: n <= strength ? strengthColor[strength] : '#e5e7eb' }}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-[11px] font-semibold" style={{ color: strengthColor[strength] }}>
-                            {strengthLabel[strength]}
-                          </p>
-=======
-                  {step === STEPS.INFO ? (
                     <form onSubmit={handleInfoSubmit} className="space-y-4">
                       {/* Full Name */}
                       <div>
@@ -311,9 +213,8 @@ const Signup = () => {
                           <input
                             type="text" name="name" value={form.name}
                             onChange={handleChange} placeholder="John Doe" required
-                            className="input-field input-field-icon"
+                            className="input-field input-field-icon" id="signup-name"
                           />
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
                         </div>
                       </div>
 
@@ -325,25 +226,85 @@ const Signup = () => {
                           <input
                             type="email" name="email" value={form.email}
                             onChange={handleChange} placeholder="you@example.com" required
-                            className="input-field input-field-icon"
+                            className="input-field input-field-icon" id="signup-email"
                           />
                         </div>
                       </div>
 
-<<<<<<< HEAD
-                    <button
-                      type="submit" disabled={loading}
-                      id="signup-submit"
-                      className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-1"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Creating account…
-                        </>
-                      ) : 'Create Account →'}
-                    </button>
-                  </form>
+                      {/* Password */}
+                      <div>
+                        <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Password</label>
+                        <div className="relative">
+                          <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
+                          <input
+                            type={showPass ? 'text' : 'password'} name="password"
+                            value={form.password} onChange={handleChange}
+                            placeholder="••••••••" required
+                            className="input-field input-field-icon pr-10" id="signup-password"
+                          />
+                          <button
+                            type="button" onClick={() => setShowPass(!showPass)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition text-[11px]"
+                          >
+                            {showPass ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+
+                        {/* Strength meter */}
+                        {form.password && (
+                          <div className="mt-2">
+                            <div className="flex gap-1 mb-1">
+                              {[1, 2, 3, 4].map((n) => (
+                                <div
+                                  key={n}
+                                  className="h-1 flex-1 rounded-full transition-all duration-300"
+                                  style={{ background: n <= strength ? strengthColor[strength] : '#e5e7eb' }}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-[11px] font-semibold" style={{ color: strengthColor[strength] }}>
+                              {strengthLabel[strength]}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Confirm Password */}
+                      <div>
+                        <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Confirm Password</label>
+                        <div className="relative">
+                          <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
+                          <input
+                            type={showConfirm ? 'text' : 'password'} name="confirm"
+                            value={form.confirm} onChange={handleChange}
+                            placeholder="••••••••" required
+                            className="input-field input-field-icon pr-10"
+                          />
+                          <button
+                            type="button" onClick={() => setShowConfirm(!showConfirm)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition text-[11px]"
+                          >
+                            {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                          </button>
+                        </div>
+                        {form.confirm && form.password !== form.confirm && (
+                          <p className="text-[11px] text-red-500 mt-1">Passwords don't match</p>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit" disabled={loading}
+                        id="signup-submit"
+                        className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                      >
+                        {loading ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Creating account…
+                          </>
+                        ) : 'Create Account →'}
+                      </button>
+                    </form>
                   )}
 
                   {step === STEPS.OTP && (
@@ -401,123 +362,8 @@ const Signup = () => {
                       </button>
                     </form>
                   )}
-=======
-                      {/* Password */}
-                      <div>
-                        <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Password</label>
-                        <div className="relative">
-                          <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
-                          <input
-                            type={showPass ? 'text' : 'password'} name="password"
-                            value={form.password} onChange={handleChange}
-                            placeholder="••••••••" required
-                            className="input-field input-field-icon pr-10"
-                          />
-                          <button
-                            type="button" onClick={() => setShowPass(!showPass)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition text-[11px]"
-                          >
-                            {showPass ? <FaEyeSlash /> : <FaEye />}
-                          </button>
-                        </div>
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
-                        {form.password && (
-                          <div className="mt-2">
-                            <div className="flex gap-1 mb-1">
-                              {[1, 2, 3, 4].map((n) => (
-                                <div
-                                  key={n}
-                                  className="h-1 flex-1 rounded-full transition-all duration-300"
-                                  style={{ background: n <= strength ? strengthColor[strength] : '#e5e7eb' }}
-                                />
-                              ))}
-                            </div>
-                            <p className="text-[11px] font-semibold" style={{ color: strengthColor[strength] }}>
-                              {strengthLabel[strength]}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Confirm Password */}
-                      <div>
-                        <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Confirm Password</label>
-                        <div className="relative">
-                          <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-400 text-[11px]" />
-                          <input
-                            type={showConfirm ? 'text' : 'password'} name="confirm"
-                            value={form.confirm} onChange={handleChange}
-                            placeholder="••••••••" required
-                            className="input-field input-field-icon pr-10"
-                          />
-                          <button
-                            type="button" onClick={() => setShowConfirm(!showConfirm)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition text-[11px]"
-                          >
-                            {showConfirm ? <FaEyeSlash /> : <FaEye />}
-                          </button>
-                        </div>
-                        {form.confirm && form.password !== form.confirm && (
-                          <p className="text-[11px] text-red-500 mt-1">Passwords don't match</p>
-                        )}
-                      </div>
-
-                      <button
-                        type="submit" disabled={loading}
-                        className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-4"
-                      >
-                        {loading ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                            Sending OTP…
-                          </>
-                        ) : 'Create Account →'}
-                      </button>
-                    </form>
-                  ) : (
-                    <form onSubmit={handleOtpSubmit} className="space-y-6">
-                      <div className="flex justify-between gap-2 sm:gap-3">
-                        {otp.map((digit, idx) => (
-                          <input
-                            key={idx}
-                            ref={(el) => (otpRefs.current[idx] = el)}
-                            type="text"
-                            maxLength="1"
-                            value={digit}
-                            onChange={(e) => handleOtpChange(idx, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(idx, e)}
-                            className="w-full h-12 sm:h-14 text-center text-lg sm:text-xl font-bold bg-gray-50 border border-gray-200 rounded-xl focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all"
-                          />
-                        ))}
-                      </div>
-
-                      <button
-                        type="submit" disabled={loading}
-                        className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {loading ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                            Verifying…
-                          </>
-                        ) : 'Verify & Register'}
-                      </button>
-
-                      <p className="text-center text-[12px] text-gray-400">
-                        Didn't receive the code?{' '}
-                        <button
-                          type="button"
-                          onClick={handleInfoSubmit}
-                          className="text-violet-600 font-bold hover:underline"
-                        >
-                          Resend
-                        </button>
-                      </p>
-                    </form>
-                  )}
-
-                  {step === STEPS.INFO && (
+                  {step === STEPS.FORM && (
                     <p className="mt-6 text-center text-[12px] text-gray-400">
                       Already have an account?{' '}
                       <Link to="/" className="text-violet-600 hover:text-violet-800 font-bold transition"

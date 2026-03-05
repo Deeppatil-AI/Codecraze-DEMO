@@ -8,7 +8,7 @@ Run:
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-from config import Config
+from settings import Config
 
 # ── Blueprint imports ─────────────────────────────────────────────────────────
 from routes.auth_routes    import auth_bp

@@ -11,7 +11,7 @@ import jwt
 from flask import request, jsonify, g
 from bson import ObjectId
 
-from config import Config
+from settings import Config
 
 
 def create_token(user_id: str, role: str = "customer") -> str:

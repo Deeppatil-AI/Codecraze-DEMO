@@ -3,7 +3,7 @@ MongoDB connection manager.
 Creates a single PyMongo client that is reused by the entire application.
 """
 from pymongo import MongoClient
-from config import Config
+from settings import Config
 
 _client = None
 _db = None

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import StatsCard from '../Components/StatsCard';
 import { FaBookmark, FaCheckCircle, FaClock, FaCalendarAlt, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-<<<<<<< HEAD
 import { getBookings, cancelBooking } from '../services/api';
 
 const statusCfg = {
@@ -56,49 +55,6 @@ const MyBookings = () => {
   const total = bookings.length;
   const active = bookings.filter((b) => b.status === 'active').length;
   const completed = bookings.filter((b) => b.status === 'completed').length;
-=======
-import { getBookings } from '../services/api';
-
-const statusCfg = {
-  active:    { cls: 'status-active',    dot: 'bg-emerald-500', label: 'Active'    },
-  confirmed: { cls: 'status-active',   dot: 'bg-emerald-500', label: 'Confirmed' },
-  paid:      { cls: 'status-completed', dot: 'bg-blue-500',   label: 'Paid'      },
-  completed: { cls: 'status-completed', dot: 'bg-blue-500',    label: 'Completed' },
-  cancelled: { cls: 'status-cancelled', dot: 'bg-red-400',     label: 'Cancelled' },
-};
-
-const MyBookings = () => {
-  const [user, setUser]         = useState(null);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading]   = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('parkmate_user');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setUser(parsed);
-
-      setLoading(true);
-      const params = {};
-      if (parsed._id)   params.user_id    = parsed._id;
-      if (parsed.email) params.user_email = parsed.email;
-
-      getBookings(params)
-        .then((res) => {
-          setBookings(res.bookings || res || []);
-        })
-        .catch((err) => {
-          console.error('Failed to fetch bookings:', err);
-          setBookings([]);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, []);
-
-  const total     = bookings.length;
-  const active    = bookings.filter((b) => ['active', 'confirmed'].includes(b.status)).length;
-  const completed = bookings.filter((b) => ['completed', 'paid'].includes(b.status)).length;
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
   /* ── Not logged in ── */
   if (!user) {
@@ -159,7 +115,6 @@ const MyBookings = () => {
             <span className="text-[12px] text-gray-400">{total} total</span>
           </div>
 
-<<<<<<< HEAD
           {loading ? (
             <div className="card-static p-8 text-center text-[13px] text-gray-400">
               Loading your bookings...
@@ -180,40 +135,6 @@ const MyBookings = () => {
                 const amount = typeof b.amount === 'number' ? b.amount : (b.totalAmount || '');
                 const vehicle = b.vehicleNumber || b.vehicle || '—';
                 const startedAt = b.entryTime || b.createdAt;
-=======
-          <div className="card-static overflow-hidden">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <span className="w-9 h-9 border-[3px] border-violet-200 border-t-violet-600 rounded-full animate-spin" />
-                <p className="text-[13px] text-gray-400">Loading bookings...</p>
-              </div>
-            ) : bookings.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-4xl mb-3">📋</p>
-                <p className="text-[14px] font-semibold text-gray-500">No bookings yet</p>
-                <p className="text-[12px] text-gray-400 mt-1">Book a parking slot to see it here.</p>
-              </div>
-            ) : (
-            bookings.map((b, i) => {
-              const cfg = statusCfg[b.status] || statusCfg.completed;
-              return (
-                <div
-                  key={b._id || b.id || i}
-                  className={`px-6 py-5 row-hover animate-fade-up ${
-                    i < bookings.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      {/* Icon */}
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
-                      >
-                        📍
-                      </div>
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
                 return (
                   <div
@@ -231,7 +152,6 @@ const MyBookings = () => {
                         >
                           📍
                         </div>
-<<<<<<< HEAD
 
                         {/* Details */}
                         <div className="min-w-0">
@@ -267,27 +187,9 @@ const MyBookings = () => {
                               </span>
                             </div>
                           )}
-=======
-                        <p className="text-[12px] text-gray-400 mt-1">
-                          Slot{' '}
-                          <span className="text-violet-600 font-mono font-semibold">{b.slot_id || b.slotId}</span>
-                          {' · '}
-                          <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{b.vehicle || b.vehicle_number}</span>
-                        </p>
-                        <div className="flex items-center gap-4 mt-1.5 text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <FaCalendarAlt className="text-violet-400 text-[10px]" />
-                            {b.date} · {b.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <FaClock className="text-blue-400 text-[10px]" />
-                            {b.duration}h
-                          </span>
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
                         </div>
                       </div>
 
-<<<<<<< HEAD
                       {/* Amount + actions */}
                       <div className="text-right flex-shrink-0">
                         {amount !== '' && (
@@ -314,19 +216,6 @@ const MyBookings = () => {
               })}
             </div>
           )}
-=======
-                    {/* Amount */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-[22px] font-extrabold gradient-text tracking-tight leading-none">₹{b.total || b.amount}</p>
-                      <p className="text-[10px] text-gray-400 font-mono mt-1">#{(b._id || b.id || '').slice(-6)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-            )}
-          </div>
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
         </div>
       </div>
     </div>

@@ -42,7 +42,6 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-<<<<<<< HEAD
 
     try {
       const token = localStorage.getItem('parkmate_token') || localStorage.getItem('parkeasy_token');
@@ -102,51 +101,6 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
     } catch (err) {
       console.error(err);
       alert(err.message || 'Error occurred while booking.');
-=======
-    try {
-      // Get booking info and selected slot from localStorage
-      const storedBooking = JSON.parse(localStorage.getItem('parkmate_booking') || '{}');
-      const storedSlot = JSON.parse(localStorage.getItem('parkmate_selected_slot') || '{}');
-      const user = JSON.parse(localStorage.getItem('parkmate_user') || 'null') || {};
-
-      const duration = parseFloat(storedBooking.duration) || 1;
-      const pricePerHr = storedSlot.price || 40;
-      const totalPrice = duration * pricePerHr;
-
-      // slot_id = MongoDB _id of the slot (stored as 'id' by Availability.jsx)
-      const slotMongoId = storedSlot.id || storedSlot._id || storedBooking.slotId || '';
-
-      // Step 1: Create booking in DB
-      const bookingRes = await bookSlot({
-        user_id: user._id || '',
-        user_email: user.email || '',   // links booking to logged-in user's dashboard even if _id is missing
-        slot_id: slotMongoId,
-        full_name: storedBooking.fullName || user.name || 'Guest',
-        vehicle: storedBooking.vehicleNumber || '',
-        location: storedBooking.location || '',
-        floor: storedBooking.floor || 'Floor 1',
-        date: storedBooking.date || '',
-        time: storedBooking.time || '',
-        duration,
-        total: totalPrice,
-      });
-
-      const bookingId = bookingRes?.booking_id || '';
-
-      // Step 2: Process payment in DB
-      const paymentRes = await makePayment({
-        booking_id: bookingId,
-        amount: totalPrice,
-        method,
-      });
-
-      setTxnId(paymentRes?.txn_id || `PE-${Date.now()}`);
-      setPaid(true);
-      onSuccess?.();
-    } catch (err) {
-      console.error('Payment failed:', err);
-      alert(err.message || 'Payment failed. Please try again.');
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
     } finally {
       setLoading(false);
     }
@@ -200,13 +154,8 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
             id={`payment-tab-${id}`}
             onClick={() => setMethod(id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${method === id
-<<<<<<< HEAD
               ? 'bg-white text-violet-700 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
-=======
-                ? 'bg-white text-violet-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
               }`}
           >
             <Icon className="text-[12px]" /> {label}

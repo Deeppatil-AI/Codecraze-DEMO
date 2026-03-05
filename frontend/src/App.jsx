@@ -5,27 +5,18 @@ import Navbar from './Components/Navbar';
 import LoginModal from './Components/LoginModal';
 
 import Home from './pages/Home';
-<<<<<<< HEAD
-import BookSlot from './pages/BookSlot';
-
-=======
 import Availability from './pages/Availability';
 import BookSlot from './pages/BookSlot';
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 import Payment from './pages/Payment';
 import MyBookings from './pages/MyBookings';
 import Contact from './pages/Contact';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
-<<<<<<< HEAD
-import Availability from './pages/Availability';
+import Dashboard from './pages/Dashboard';
 import AdminLogin from './admin/AdminLogin';
 import AdminDashboard from './admin/AdminDashboard';
 import AdminRoute from './admin/AdminRoute';
 import CustomerRoute from './routes/CustomerRoute';
-=======
-import Dashboard from './pages/Dashboard';
-import AdminPanel from './pages/AdminPanel';
 
 /* ───────────────────────────────────────────────────────────── */
 /* Inner component — needs access to useNavigate (inside Router) */
@@ -33,7 +24,6 @@ import AdminPanel from './pages/AdminPanel';
 function AppInner() {
   const navigate = useNavigate();
   const location = useLocation();
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [user, setUser] = useState(() => {
@@ -87,11 +77,11 @@ function AppInner() {
 
   const handleLogout = () => {
     localStorage.removeItem('parkmate_user');
+    localStorage.removeItem('parkmate_token');
+    localStorage.removeItem('parkmate_admin');
     setUser(null);
     navigate('/');
   };
-
-  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -111,20 +101,12 @@ function AppInner() {
       />
 
       <Routes>
-<<<<<<< HEAD
+        {/* ── Public / User routes ── */}
         <Route
           path="/"
           element={(
             <CustomerRoute>
               <Home />
-            </CustomerRoute>
-          )}
-        />
-        <Route
-          path="/book"
-          element={(
-            <CustomerRoute>
-              <BookSlot />
             </CustomerRoute>
           )}
         />
@@ -136,7 +118,14 @@ function AppInner() {
             </CustomerRoute>
           )}
         />
-
+        <Route
+          path="/book"
+          element={(
+            <CustomerRoute>
+              <BookSlot />
+            </CustomerRoute>
+          )}
+        />
         <Route
           path="/payment"
           element={(
@@ -177,6 +166,16 @@ function AppInner() {
             </CustomerRoute>
           )}
         />
+        <Route
+          path="/dashboard"
+          element={(
+            <CustomerRoute>
+              <Dashboard />
+            </CustomerRoute>
+          )}
+        />
+
+        {/* ── Admin routes ── */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"
@@ -185,27 +184,6 @@ function AppInner() {
               <AdminDashboard />
             </AdminRoute>
           )}
-=======
-        {/* ── Public / User routes ── */}
-        <Route path="/" element={<Home />} />
-        <Route path="/availability" element={<Availability />} />
-        <Route path="/book" element={<BookSlot />} />
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/bookings" element={<MyBookings />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-
-        {/* ── Admin route — redirect non-admins to login ── */}
-        <Route
-          path="/admin"
-          element={
-            isAdmin
-              ? <AdminPanel user={user} onLogout={handleLogout} />
-              : <Navigate to="/" replace />
-          }
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
         />
       </Routes>
     </>

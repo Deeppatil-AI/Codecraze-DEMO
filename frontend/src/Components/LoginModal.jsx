@@ -6,9 +6,6 @@ import {
 } from 'react-icons/fa';
 import { loginUser } from '../services/api';
 
-<<<<<<< HEAD
-const LoginModal = ({ isOpen, onClose }) => {
-=======
 const ADMIN_EMAILS = ['admin@parkmate.com', 'admin@example.com', 'admin@test.com'];
 
 /* ── Hard-coded admin credentials (demo) ── */
@@ -20,7 +17,6 @@ const ADMIN_CREDENTIALS = [
 
 const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [mode, setMode] = useState('user');   // 'user' | 'admin'
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,35 +41,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setError('');
 
     try {
-<<<<<<< HEAD
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      localStorage.setItem('parkmate_user', JSON.stringify(data.user));
-      localStorage.setItem('parkmate_token', data.token);
-      onClose();
-      window.location.reload();
-    } catch (err) {
-      if (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource.') {
-        setError('Unable to reach the server. Please make sure the ParkMate backend is running on http://localhost:5000.');
-      } else {
-        setError(err.message || 'Invalid email or password. Please try again.');
-      }
-=======
       if (isAdmin) {
         /* ── Admin login: validate against hard-coded list ── */
         const match = ADMIN_CREDENTIALS.find(
@@ -90,21 +57,43 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         else onClose();
       } else {
         /* ── User login: call API ── */
-        const res = await loginUser({ email: form.email, password: form.password });
-        // Merge to ensure email is always present even if backend omits it
-        const userData = { email: form.email, role: 'user', ...(res.user || { name: form.email.split('@')[0] }) };
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
         // Make sure admin emails aren't sneaking in via user tab
         if (ADMIN_EMAILS.includes(form.email.toLowerCase())) {
           throw new Error('Use the Admin tab to login as admin.');
         }
-        localStorage.setItem('parkmate_user', JSON.stringify(userData));
+
+        localStorage.setItem('parkmate_user', JSON.stringify(data.user));
+        localStorage.setItem('parkmate_token', data.token);
         window.dispatchEvent(new CustomEvent('userLoggedIn'));
-        if (onLoginSuccess) onLoginSuccess(userData, 'user');
-        else onClose();
+        if (onLoginSuccess) onLoginSuccess(data.user, 'user');
+        else {
+          onClose();
+          window.location.reload();
+        }
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
+      if (err.message === 'Failed to fetch' || err.message === 'NetworkError when attempting to fetch resource.') {
+        setError('Unable to reach the server. Please make sure the ParkMate backend is running on http://localhost:5000.');
+      } else {
+        setError(err.message || 'Invalid email or password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -148,8 +137,8 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
               id="login-tab-user"
               onClick={() => resetForm('user')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${!isAdmin
-                  ? 'bg-white text-violet-700 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-violet-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               <FaUser className="text-[11px]" />
@@ -160,8 +149,8 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
               id="login-tab-admin"
               onClick={() => resetForm('admin')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${isAdmin
-                  ? 'bg-white text-indigo-800 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-indigo-800 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               <FaShieldAlt className="text-[11px]" />
@@ -270,8 +259,8 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
               disabled={loading}
               id="login-submit"
               className={`w-full py-3.5 text-[14px] rounded-xl font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200 ${isAdmin
-                  ? 'bg-gradient-to-r from-indigo-900 to-indigo-700 hover:from-indigo-800 hover:to-indigo-600 shadow-md hover:shadow-indigo-300/40 hover:-translate-y-[1px]'
-                  : 'btn-primary'
+                ? 'bg-gradient-to-r from-indigo-900 to-indigo-700 hover:from-indigo-800 hover:to-indigo-600 shadow-md hover:shadow-indigo-300/40 hover:-translate-y-[1px]'
+                : 'btn-primary'
                 }`}
             >
               {loading ? (
@@ -279,22 +268,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Signing in...
                 </>
-<<<<<<< HEAD
-              ) : 'Login to ParkMate'}
-            </button>
-          </form>
-
-          <p className="mt-5 text-center text-[12px] text-gray-400">
-            Don't have an account?{' '}
-            <Link
-              to="/signup"
-              onClick={onClose}
-              className="text-violet-600 hover:text-violet-800 font-bold transition"
-            >
-              Sign Up
-            </Link>
-          </p>
-=======
               ) : (
                 <>
                   {isAdmin ? <FaShieldAlt className="text-[12px]" /> : null}
@@ -324,7 +297,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
               Admin accounts are managed by your organization.
             </p>
           )}
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
         </div>
       </div>
     </div>

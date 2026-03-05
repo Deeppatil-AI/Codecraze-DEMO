@@ -54,10 +54,14 @@ def generate_otp(length: int = 6) -> str:
 
 def send_email(to_email: str, subject: str, body: str) -> None:
     """
-    Send an email using basic SMTP settings from environment variables.
+    Send an email using SMTP settings from environment variables.
 
-    If SMTP is not configured, the message is printed to the console so
-    OTP flows continue to work in development.
+    Supports two modes:
+    - Port 465 → SMTP_SSL (direct TLS, preferred for Gmail)
+    - Port 587  → STARTTLS (common alternative)
+
+    If SMTP is not configured, the OTP is printed to the console so
+    development flows continue to work without an email server.
     """
     host = os.getenv("SMTP_HOST")
     username = os.getenv("SMTP_USERNAME")
@@ -65,11 +69,14 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     from_email = os.getenv("EMAIL_FROM", username or "no-reply@example.com")
     port = int(os.getenv("SMTP_PORT", "587"))
 
-    if not host or not username or not password:
+    if not host or not username or not password \
+            or "your_gmail" in (username or "") \
+            or "your_16_char" in (password or ""):
         print("\n[DEV EMAIL] ------------------------------")
         print(f"To: {to_email}")
         print(f"Subject: {subject}")
         print(body)
+        print("NOTE: Configure SMTP_HOST / SMTP_USERNAME / SMTP_PASSWORD in backend/.env to send real emails.")
         print("-----------------------------------------\n")
         return
 
@@ -80,9 +87,20 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     msg.set_content(body)
 
     try:
-        with smtplib.SMTP(host, port) as server:
-            server.starttls()
-            server.login(username, password)
-            server.send_message(msg)
-    except Exception as exc:  # pragma: no cover - best-effort email
-        print(f"Failed to send email: {exc}")
+        if port == 465:
+            # Direct SSL connection (Gmail App Password on port 465)
+            with smtplib.SMTP_SSL(host, port) as server:
+                server.login(username, password)
+                server.send_message(msg)
+        else:
+            # STARTTLS (Gmail App Password on port 587)
+            with smtplib.SMTP(host, port) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(username, password)
+                server.send_message(msg)
+        print(f"[EMAIL] OTP sent successfully to {to_email}")
+    except Exception as exc:
+        print(f"[EMAIL ERROR] Failed to send email to {to_email}: {exc}")
+

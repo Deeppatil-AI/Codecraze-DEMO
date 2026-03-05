@@ -3,9 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   FaCar, FaMapMarkerAlt, FaCalendarAlt, FaClock, FaChevronDown,
   FaUser, FaLayerGroup, FaParking, FaCheckCircle,
-  FaArrowRight, FaRupeeSign, FaEye, FaTimes, FaInfoCircle,
+  FaArrowRight, FaRupeeSign, FaEye, FaTimes,
 } from 'react-icons/fa';
-import { getSlots, bookSlot } from '../services/api';
 
 /* ──────────────────── constants ──────────────────── */
 const LOCATIONS = [
@@ -21,12 +20,6 @@ const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
 const DURATIONS = ['0.5', '1', '1.5', '2', '2.5', '3', '4', '6', '8', '12', '24'];
 const RATE_PER_HOUR = 40;
 
-<<<<<<< HEAD
-// Generate random prices as fallback
-const defaultPrices = [30, 40, 50, 60];
-
-=======
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 /* ──────────────────── helpers ──────────────────── */
 const SelectWrapper = ({ icon: Icon, children }) => (
   <div className="relative">
@@ -60,7 +53,6 @@ const BookSlot = () => {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const totalAmount = form.duration ? parseFloat(form.duration) * (preselected?.price || RATE_PER_HOUR) : 0;
@@ -78,7 +70,6 @@ const BookSlot = () => {
           floor: slot.floor || prev.floor,
           slotId: slot.slotId || '',
         }));
-        // Clear it after reading
         localStorage.removeItem('parkmate_preselected_slot');
       } catch {
         // ignore
@@ -91,101 +82,60 @@ const BookSlot = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-<<<<<<< HEAD
-  /* ── step 1 → 2 ── */
-  const handleFindSlots = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount }));
-
-    try {
-      const floorNum = form.floor.replace(/\D/g, '') || 1;
-      const res = await fetch(`/api/slots?floor=${floorNum}`);
-      const data = await res.json();
-
-      const formattedSlots = (data.slots || []).map(s => ({
-        id: s._id || s.slot_id || s.slotId,
-        slotId: s.slotId,
-        status: s.status,
-        price: s.pricePerHour || defaultPrices[Math.floor(Math.random() * defaultPrices.length)],
-      }));
-      setSlots(formattedSlots);
-      setStep(2);
-    } catch (err) {
-      console.error("Failed to fetch slots:", err);
-      // fallback handling could go here
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ── refresh slots ── */
-  const refreshSlots = async () => {
-    setLoading(true);
-    try {
-      const floorNum = form.floor.replace(/\D/g, '') || 1;
-      const res = await fetch(`/api/slots?floor=${floorNum}`);
-      const data = await res.json();
-      const formattedSlots = (data.slots || []).map(s => ({
-        id: s._id || s.slot_id || s.slotId,
-        slotId: s.slotId,
-        status: s.status,
-        price: s.pricePerHour || defaultPrices[Math.floor(Math.random() * defaultPrices.length)],
-      }));
-      setSlots(formattedSlots);
-    } catch (err) {
-      console.error("Failed to refresh slots:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ── book a specific slot ── */
-  const handleBookSlot = (slot) => {
-    const booking = { ...form, totalAmount: slot.price * parseInt(form.duration || '1', 10), slotId: slot.slotId };
-    localStorage.setItem('parkmate_booking', JSON.stringify(booking));
-    localStorage.setItem('parkmate_selected_slot', JSON.stringify(slot));
-    navigate('/payment');
-  };
-
-  /* ── derived ── */
-  const filtered = slots.filter((s) => filter === 'all' || s.status === filter);
-  const totalSlots = slots.length;
-  const availableSlots = slots.filter((s) => s.status === 'available').length;
-  const occupiedSlots = slots.filter((s) => s.status === 'occupied').length;
-
-=======
   const clearPreselected = () => {
     setPreselected(null);
     setForm((prev) => ({ ...prev, slotId: '' }));
   };
 
-  /* ── Submit booking ── */
+  /* ── submit booking ── */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    try {
+      const user = JSON.parse(localStorage.getItem('parkmate_user') || '{}');
+      const token = localStorage.getItem('parkmate_token');
 
-    const bookingData = {
-      ...form,
-      totalAmount,
-      slotId: preselected?.slotId || form.slotId || 'Auto-assign',
-      slotPrice: preselected?.price || RATE_PER_HOUR,
-    };
+      const payload = {
+        full_name: form.fullName,
+        vehicle_number: form.vehicleNumber,
+        date: form.date,
+        time: form.time,
+        location: form.location,
+        floor: form.floor,
+        duration: parseFloat(form.duration),
+        total: totalAmount,
+        user_id: user?._id || user?.id || '',
+        user_email: user?.email || '',
+        slot_id: preselected?.id || preselected?._id || '',
+      };
 
-    // Store in localStorage for downstream (payment, etc.)
-    localStorage.setItem('parkmate_booking', JSON.stringify(bookingData));
-    if (preselected) {
-      localStorage.setItem('parkmate_selected_slot', JSON.stringify(preselected));
-    }
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    // Navigate to payment
-    setTimeout(() => {
-      setSubmitting(false);
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || data.message || 'Booking failed.');
+
+      // Store booking info for payment page
+      localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount, bookingId: data.booking_id }));
+      if (preselected) {
+        localStorage.setItem('parkmate_selected_slot', JSON.stringify(preselected));
+      }
+
       navigate('/payment');
-    }, 800);
+    } catch (err) {
+      alert(err.message || 'Booking failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   /* ══════════════ RENDER ══════════════ */
   return (
     <div className="page-bg pt-[60px]">
@@ -208,112 +158,20 @@ const BookSlot = () => {
           </p>
         </div>
 
-<<<<<<< HEAD
-        {/* ── Step Indicator ── */}
-        <div className="flex items-center gap-0 mb-8">
-          {/* Step 1 */}
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${step >= 1
-                ? 'text-white shadow-md'
-                : 'bg-gray-200 text-gray-500'
-                }`}
-              style={step >= 1 ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' } : {}}
-            >
-              {step > 1 ? <FaCheckCircle className="text-[14px]" /> : '1'}
-            </div>
-            <span className={`text-[13px] font-semibold ${step >= 1 ? 'text-gray-800' : 'text-gray-400'}`}>
-              Booking Details
-            </span>
-          </div>
-
-          {/* Connector */}
-          <div className="flex-1 mx-4 h-[2px] rounded-full overflow-hidden bg-gray-200">
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: step >= 2 ? '100%' : '0%',
-                background: 'linear-gradient(90deg, #7c3aed, #6d28d9)',
-              }}
-            />
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold transition-all duration-300 ${step >= 2
-                ? 'text-white shadow-md'
-                : 'bg-gray-200 text-gray-500'
-                }`}
-              style={step >= 2 ? { background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' } : {}}
-            >
-              2
-            </div>
-            <span className={`text-[13px] font-semibold ${step >= 2 ? 'text-gray-800' : 'text-gray-400'}`}>
-              Choose Slot
-            </span>
-          </div>
-        </div>
-
-        {/* ═══════════════════════════════════════════
-            STEP 1 — Booking Form
-            ═══════════════════════════════════════════ */}
-        {step === 1 && (
-          <form onSubmit={handleFindSlots} className="card-static overflow-hidden animate-fade-up">
-            {/* Gradient top bar */}
-            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #7c3aed, #4f46e5, #2563eb)' }} />
-
-            <div className="p-8 space-y-5">
-              {/* Full Name */}
-              <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Full Name</label>
-                <div className="relative">
-                  <FaUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 text-[12px]" />
-                  <input
-                    type="text" name="fullName" value={form.fullName} onChange={handleChange}
-                    placeholder="e.g., Rahul Sharma" required
-                    className="input-field input-field-icon" id="booking-name-input"
-                  />
-=======
         {/* ── Pre-selected Slot Banner ── */}
         {preselected && (
-          <div className="card-static overflow-hidden mb-6 animate-fade-up">
-            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
-            <div className="px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md"
-                  style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}
-                >
-                  <FaParking className="text-[16px]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[14px] font-bold text-gray-800">
-                      Slot {preselected.slotId} selected
-                    </p>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/10 text-emerald-700">
-                      <FaCheckCircle className="text-[8px]" /> Available
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-gray-500 flex items-center gap-1.5">
-                    <FaMapMarkerAlt className="text-[10px] text-violet-400" />
-                    {preselected.location} · {preselected.floor}
-                    <span className="mx-1">·</span>
-                    <FaRupeeSign className="text-[10px] text-violet-400" />
-                    {preselected.price}/hr
-                  </p>
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
-                </div>
-              </div>
-              <button
-                onClick={clearPreselected}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-                title="Remove selected slot"
-              >
-                <FaTimes className="text-[11px]" />
-              </button>
+          <div className="mb-6 flex items-center justify-between rounded-xl px-4 py-3 bg-violet-50 border border-violet-200">
+            <div className="flex items-center gap-2 text-[13px] text-violet-700 font-semibold">
+              <FaParking className="text-violet-500" />
+              Pre-selected: Slot {preselected.slotId} — {preselected.location} · {preselected.floor}
             </div>
+            <button
+              onClick={clearPreselected}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+              title="Remove selected slot"
+            >
+              <FaTimes className="text-[11px]" />
+            </button>
           </div>
         )}
 
@@ -449,7 +307,6 @@ const BookSlot = () => {
                   </SelectWrapper>
                 </div>
               </div>
-
             </div>
 
             {/* Divider */}
@@ -503,125 +360,6 @@ const BookSlot = () => {
                 View Available Slots First
               </Link>
             </div>
-<<<<<<< HEAD
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <StatsCard icon={<FaParking />} label="Total Slots" value={totalSlots} color="purple" />
-              <StatsCard icon={<FaCheckCircle />} label="Available" value={availableSlots} color="green" />
-              <StatsCard icon={<FaTimesCircle />} label="Occupied" value={occupiedSlots} color="red" />
-            </div>
-
-            {/* Toolbar */}
-            <div className="card-static px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
-              {/* Legend */}
-              <div className="flex items-center gap-4 text-[13px] text-gray-500">
-                <span className="flex items-center gap-2 font-medium">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  Available ({availableSlots})
-                </span>
-                <span className="flex items-center gap-2 font-medium">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                  Occupied ({occupiedSlots})
-                </span>
-              </div>
-
-              {/* Filter buttons */}
-              <div className="flex items-center gap-1.5">
-                {['all', 'available', 'occupied'].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold capitalize transition-all duration-150 ${filter === f
-                      ? 'text-white shadow-sm'
-                      : 'text-gray-500 bg-white border border-gray-200 hover:text-violet-700 hover:border-violet-200'
-                      }`}
-                    style={filter === f ? { background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' } : {}}
-                  >
-                    {f}
-                  </button>
-                ))}
-                <button
-                  onClick={refreshSlots}
-                  title="Refresh slots"
-                  className="ml-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-violet-700 hover:border-violet-200 transition text-[13px]"
-                >
-                  <FaSync className={loading ? 'animate-spin' : ''} />
-                </button>
-              </div>
-            </div>
-
-            {/* Slot Grid */}
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <span className="w-9 h-9 border-[3px] border-violet-200 border-t-violet-600 rounded-full animate-spin" />
-                <p className="text-[13px] text-gray-400">Loading parking slots...</p>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-4xl mb-3">🅿️</p>
-                <p className="text-[14px] font-semibold text-gray-500">No slots match the current filter.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {filtered.map((slot, i) => {
-                  const isAvailable = slot.status === 'available';
-                  return (
-                    <div
-                      key={slot.id}
-                      className="animate-fade-up"
-                      style={{ animationDelay: `${i * 0.03}s` }}
-                    >
-                      <div className={`p-4 flex flex-col gap-2.5 ${isAvailable ? 'slot-available' : 'slot-occupied'}`}>
-                        {/* Top row */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-base">🅿️</span>
-                          <span
-                            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isAvailable
-                              ? 'bg-emerald-600/10 text-emerald-700'
-                              : 'bg-red-600/10 text-red-700'
-                              }`}
-                          >
-                            {isAvailable ? <FaCheckCircle className="text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
-                            {isAvailable ? 'Open' : 'Taken'}
-                          </span>
-                        </div>
-
-                        {/* Slot ID */}
-                        <div>
-                          <p className={`font-bold text-[15px] tracking-tight leading-none ${isAvailable ? 'text-emerald-800' : 'text-red-800'}`}>
-                            {slot.slotId}
-                          </p>
-                          <p className={`text-[12px] mt-0.5 font-semibold flex items-center gap-0.5 ${isAvailable ? 'text-emerald-600' : 'text-red-500'}`}>
-                            <FaRupeeSign className="text-[10px]" />{slot.price}
-                            <span className="font-normal opacity-70">/hr</span>
-                          </p>
-                        </div>
-
-                        {/* Button */}
-                        {isAvailable ? (
-                          <button
-                            onClick={() => handleBookSlot(slot)}
-                            className="w-full mt-auto text-[12px] font-bold py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white transition-all duration-150 shadow-sm"
-                          >
-                            Book Now
-                          </button>
-                        ) : (
-                          <button
-                            disabled
-                            className="w-full mt-auto text-[12px] font-semibold py-1.5 rounded-lg bg-red-200/60 text-red-400 cursor-not-allowed"
-                          >
-                            Occupied
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-=======
->>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
           </div>
         </form>
       </div>
