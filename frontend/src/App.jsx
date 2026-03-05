@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 
-import Navbar     from './Components/Navbar';
+import Navbar from './Components/Navbar';
 import LoginModal from './Components/LoginModal';
 
-import Home          from './pages/Home';
-import Availability  from './pages/Availability';
-import BookSlot      from './pages/BookSlot';
-import Payment       from './pages/Payment';
-import MyBookings    from './pages/MyBookings';
-import Contact       from './pages/Contact';
-import Signup        from './pages/Signup';
+import Home from './pages/Home';
+import Availability from './pages/Availability';
+import BookSlot from './pages/BookSlot';
+import Payment from './pages/Payment';
+import MyBookings from './pages/MyBookings';
+import Contact from './pages/Contact';
+import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
-import Dashboard      from './pages/Dashboard';
-import AdminPanel     from './pages/AdminPanel';
+import Dashboard from './pages/Dashboard';
+import AdminPanel from './pages/AdminPanel';
 
 /* ───────────────────────────────────────────────────────────── */
 /* Inner component — needs access to useNavigate (inside Router) */
@@ -79,15 +79,15 @@ function AppInner() {
 
       <Routes>
         {/* ── Public / User routes ── */}
-        <Route path="/"               element={<Home />}           />
-        <Route path="/availability"   element={<Availability />}   />
-        <Route path="/book"           element={<BookSlot />}       />
-        <Route path="/payment"        element={<Payment />}        />
-        <Route path="/bookings"       element={<MyBookings />}     />
-        <Route path="/contact"        element={<Contact />}        />
-        <Route path="/signup"         element={<Signup />}         />
+        <Route path="/" element={<Home />} />
+        <Route path="/availability" element={<Availability />} />
+        <Route path="/book" element={<BookSlot />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/bookings" element={<MyBookings />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard"      element={<Dashboard />}      />
+        <Route path="/dashboard" element={<Dashboard />} />
 
         {/* ── Admin route — redirect non-admins to login ── */}
         <Route

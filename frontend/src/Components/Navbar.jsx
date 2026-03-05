@@ -3,19 +3,19 @@ import { NavLink, Link } from 'react-router-dom';
 import { FaBars, FaTimes, FaChartBar, FaShieldAlt, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
 
 const navLinks = [
-  { to: '/',              label: 'Home' },
-  { to: '/availability',  label: 'Availability' },
-  { to: '/book',          label: 'Book Slot' },
-  { to: '/payment',       label: 'Payment' },
-  { to: '/bookings',      label: 'My Bookings' },
-  { to: '/contact',       label: 'Contact' },
+  { to: '/', label: 'Home' },
+  { to: '/availability', label: 'Availability' },
+  { to: '/book', label: 'Book Slot' },
+  { to: '/payment', label: 'Payment' },
+  { to: '/bookings', label: 'My Bookings' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 const ADMIN_EMAILS = ['admin@parkeasy.com', 'admin@example.com', 'admin@test.com'];
 
 const Navbar = ({ onLoginClick, user, onLogout }) => {
-  const [menuOpen, setMenuOpen]       = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const isAdmin = user && (ADMIN_EMAILS.includes(user.email?.toLowerCase()) || user.role === 'admin');
@@ -28,11 +28,10 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
           ? 'bg-white/98 backdrop-blur-xl border-b border-gray-200/80 shadow-sm'
           : 'bg-white/90 backdrop-blur-md border-b border-transparent'
-      }`}
+        }`}
     >
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-[60px]">
@@ -53,10 +52,9 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  `px-3.5 py-1.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 ${
-                    isActive
-                      ? 'text-violet-700 bg-violet-50'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80'
+                  `px-3.5 py-1.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 ${isActive
+                    ? 'text-violet-700 bg-violet-50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80'
                   }`
                 }
               >
@@ -151,10 +149,9 @@ const Navbar = ({ onLoginClick, user, onLogout }) => {
                 end={link.to === '/'}
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>
-                  `block px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'text-violet-700 bg-violet-50'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  `block px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
+                    ? 'text-violet-700 bg-violet-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`
                 }
               >
