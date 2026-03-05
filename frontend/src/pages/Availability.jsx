@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
 import SlotCard from '../Components/SlotCard';
 import StatsCard from '../Components/StatsCard';
-import { FaParking, FaCheckCircle, FaTimesCircle, FaSync } from 'react-icons/fa';
+import { FaParking, FaCheckCircle, FaTimesCircle, FaSync, FaMapMarkerAlt, FaLayerGroup } from 'react-icons/fa';
 
-const generateSlots = (location = '') => {
+const LOCATIONS = [
+  'Downtown Parking Hub',
+  'Airport Terminal A',
+  'Mall Central Parking',
+  'City Square',
+  'Tech Park',
+];
+
+const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
+
+const generateSlots = (location = '', floor = '') => {
   const prices = [30, 40, 50, 60];
+  const prefix = `${location.slice(0, 2).toUpperCase() || 'P'}-${floor.replace(/\D/g, '') || '1'}`;
   return Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
-    slotId: `${(location.slice(0, 2).toUpperCase() || 'P')}-${String(i + 1).padStart(3, '0')}`,
+    slotId: `${prefix}-${String(i + 1).padStart(3, '0')}`,
     status: Math.random() > 0.45 ? 'available' : 'occupied',
     price: prices[Math.floor(Math.random() * prices.length)],
   }));
@@ -17,22 +28,28 @@ const Availability = () => {
   const [slots, setSlots]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [filter, setFilter]           = useState('all');
-  const [bookingInfo, setBookingInfo] = useState(null);
+  const [location, setLocation]       = useState(LOCATIONS[0]);
+  const [floor, setFloor]             = useState(FLOORS[0]);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('parkeasy_booking');
-    if (stored) setBookingInfo(JSON.parse(stored));
-  }, []);
-
-  const loadSlots = () => {
+  const loadSlots = (loc = location, flr = floor) => {
     setLoading(true);
     setTimeout(() => {
-      setSlots(generateSlots(bookingInfo?.location || ''));
+      setSlots(generateSlots(loc, flr));
       setLoading(false);
-    }, 700);
+    }, 600);
   };
 
-  useEffect(() => { loadSlots(); }, [bookingInfo]);
+  useEffect(() => { loadSlots(); }, []);
+
+  const handleLocationChange = (e) => {
+    setLocation(e.target.value);
+    loadSlots(e.target.value, floor);
+  };
+
+  const handleFloorChange = (e) => {
+    setFloor(e.target.value);
+    loadSlots(location, e.target.value);
+  };
 
   const filtered       = slots.filter((s) => filter === 'all' || s.status === filter);
   const totalSlots     = slots.length;
@@ -49,12 +66,12 @@ const Availability = () => {
           <h1 className="text-[36px] sm:text-[44px] font-extrabold text-gray-900 tracking-tight leading-tight mt-2">
             Slot <span className="gradient-text">Availability</span>
           </h1>
-          {bookingInfo?.location && (
-            <p className="text-gray-500 text-[14px] mt-2">
-              Showing slots at{' '}
-              <span className="text-violet-600 font-semibold">{bookingInfo.location}</span>
-            </p>
-          )}
+          <p className="text-gray-500 text-[14px] mt-2">
+            Showing slots at{' '}
+            <span className="text-violet-600 font-semibold">{location}</span>
+            {' · '}
+            <span className="text-violet-600 font-semibold">{floor}</span>
+          </p>
         </div>
 
         {/* Stats Row */}
@@ -62,6 +79,51 @@ const Availability = () => {
           <StatsCard icon={<FaParking />}     label="Total Slots"  value={totalSlots}     color="purple" />
           <StatsCard icon={<FaCheckCircle />} label="Available"    value={availableSlots} color="green"  />
           <StatsCard icon={<FaTimesCircle />} label="Occupied"     value={occupiedSlots}  color="red"    />
+        </div>
+
+        {/* Location & Floor Dropdowns */}
+        <div className="card-static px-6 py-5 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Location */}
+            <div>
+              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <FaMapMarkerAlt className="text-violet-400" />
+                Location
+              </label>
+              <div className="relative">
+                <select
+                  value={location}
+                  onChange={handleLocationChange}
+                  className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-[14px] font-medium text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition cursor-pointer hover:border-violet-300"
+                >
+                  {LOCATIONS.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[12px]">▼</span>
+              </div>
+            </div>
+
+            {/* Floor */}
+            <div>
+              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <FaLayerGroup className="text-violet-400" />
+                Floor
+              </label>
+              <div className="relative">
+                <select
+                  value={floor}
+                  onChange={handleFloorChange}
+                  className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-[14px] font-medium text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition cursor-pointer hover:border-violet-300"
+                >
+                  {FLOORS.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[12px]">▼</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -95,7 +157,7 @@ const Availability = () => {
               </button>
             ))}
             <button
-              onClick={loadSlots}
+              onClick={() => loadSlots()}
               title="Refresh slots"
               className="ml-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-violet-700 hover:border-violet-200 transition text-[13px]"
             >

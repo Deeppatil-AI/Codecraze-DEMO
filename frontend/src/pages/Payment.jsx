@@ -32,7 +32,7 @@ const Payment = () => {
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12 relative">
         {/* Header */}
         <div className="mb-8">
-          <span className="badge mb-3">💳 Almost There</span>
+          {/* <span className="badge mb-3">💳 Almost There</span> */}
           <h1 className="text-[36px] sm:text-[44px] font-extrabold text-gray-900 tracking-tight leading-tight mt-2">
             Confirm <span className="gradient-text">Payment</span>
           </h1>
@@ -86,14 +86,6 @@ const Payment = () => {
                 </div>
               </div>
             )}
-
-            {/* Trust */}
-            <div className="card-static px-5 py-4 flex items-start gap-3">
-              <FaShieldAlt className="text-emerald-500 text-base mt-0.5 flex-shrink-0" />
-              <p className="text-[12px] text-gray-500 leading-snug">
-                100% secure checkout. We never store card details. Guaranteed refund within 24 hours if slot unavailable.
-              </p>
-            </div>
           </div>
 
           {/* Payment Form */}

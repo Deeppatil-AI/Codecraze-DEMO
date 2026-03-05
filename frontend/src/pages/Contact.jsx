@@ -13,7 +13,7 @@ const Contact = () => (
 
       {/* Header */}
       <div className="text-center mb-12">
-        <span className="badge mb-3">💬 Support</span>
+        {/* <span className="badge mb-3">💬 Support</span> */}
         <h1 className="text-[36px] sm:text-[44px] font-extrabold text-gray-900 tracking-tight leading-tight mt-2">
           Get in <span className="gradient-text">Touch</span>
         </h1>
@@ -23,7 +23,7 @@ const Contact = () => (
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {contactInfo.map((info, i) => (
           <div
             key={i}
@@ -38,7 +38,7 @@ const Contact = () => (
             <p className="text-[11px] text-gray-400">{info.sub}</p>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Two-column */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

@@ -45,10 +45,10 @@ const Hero = () => (
 
       <div className="relative w-full max-w-5xl mx-auto px-5 sm:px-8 py-20 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-semibold px-4 py-2 rounded-full mb-8 animate-fade-up">
+        {/* <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-semibold px-4 py-2 rounded-full mb-8 animate-fade-up">
           <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
           1,200+ Slots Available Right Now
-        </div>
+        </div> */}
 
         {/* Heading */}
         <h1 className="text-[52px] sm:text-[68px] lg:text-[80px] font-extrabold text-white leading-[1.05] tracking-[-0.03em] mb-6 animate-fade-up delay-1">
@@ -109,7 +109,7 @@ const Hero = () => (
       <div className="max-w-5xl mx-auto">
         {/* Section label */}
         <div className="text-center mb-12">
-          <span className="badge mb-4">✦ Why ParkMate</span>
+          {/* <span className="badge mb-4">✦ Why ParkMate</span> */}
           <h2 className="text-[32px] sm:text-[40px] font-extrabold text-gray-900 tracking-tight leading-tight mt-3">
             Everything you need for <span className="gradient-text">smart parking</span>
           </h2>

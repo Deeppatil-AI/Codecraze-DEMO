@@ -179,9 +179,6 @@ const PaymentForm = ({ booking, onSuccess }) => {
           )}
         </button>
 
-        <p className="text-center text-[11px] text-gray-400">
-          🔒 Secured by 256-bit SSL encryption
-        </p>
       </form>
     </div>
   );

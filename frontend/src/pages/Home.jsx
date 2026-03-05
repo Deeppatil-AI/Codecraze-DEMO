@@ -33,7 +33,7 @@ const Home = () => (
     <section className="bg-white py-20 px-5 sm:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <span className="badge">🚀 Simple Process</span>
+          {/* <span className="badge">🚀 Simple Process</span> */}
           <h2 className="text-[32px] sm:text-[40px] font-extrabold text-gray-900 tracking-tight leading-tight mt-3">
             How It <span className="gradient-text">Works</span>
           </h2>
