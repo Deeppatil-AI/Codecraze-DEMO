@@ -3,20 +3,21 @@ from config.db import bookings_collection, slots_collection
 from bson import ObjectId
 
 
-def create_booking(user_id, slot_id, full_name, vehicle, location, floor, date, time, duration, total):
+def create_booking(user_id, slot_id, full_name, vehicle, location, floor, date, time, duration, total, user_email=''):
     """Insert a new booking and mark the slot as occupied. Returns the booking id."""
     booking = {
-        "user_id": user_id,
-        "slot_id": slot_id,
-        "full_name": full_name,
-        "vehicle": vehicle,
-        "location": location,
-        "floor": floor,
-        "date": date,
-        "time": time,
-        "duration": int(duration),
-        "total": int(total),
-        "status": "confirmed",
+        "user_id":    user_id,
+        "user_email": user_email.lower().strip() if user_email else '',
+        "slot_id":    slot_id,
+        "full_name":  full_name,
+        "vehicle":    vehicle,
+        "location":   location,
+        "floor":      floor,
+        "date":       date,
+        "time":       time,
+        "duration":   float(duration),
+        "total":      float(total),
+        "status":     "confirmed",
         "created_at": datetime.utcnow().isoformat(),
     }
 
@@ -35,9 +36,20 @@ def create_booking(user_id, slot_id, full_name, vehicle, location, floor, date, 
 
 
 def get_bookings_by_user(user_id):
-    """Return all bookings for a given user, newest first."""
+    """Return all bookings for a given user by user_id, newest first."""
     bookings = list(
         bookings_collection.find({"user_id": user_id}).sort("created_at", -1)
+    )
+    for b in bookings:
+        b["_id"] = str(b["_id"])
+    return bookings
+
+
+def get_bookings_by_user_email(email):
+    """Return all bookings for a user by their email address, newest first."""
+    email = email.lower().strip()
+    bookings = list(
+        bookings_collection.find({"user_email": email}).sort("created_at", -1)
     )
     for b in bookings:
         b["_id"] = str(b["_id"])

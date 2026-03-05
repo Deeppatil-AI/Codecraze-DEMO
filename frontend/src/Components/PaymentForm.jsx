@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FaCreditCard, FaMobileAlt, FaLock, FaCheckCircle } from 'react-icons/fa';
 import { bookSlot, makePayment } from '../services/api';
 
@@ -45,36 +46,40 @@ const PaymentForm = ({ booking, onSuccess }) => {
       // Get booking info and selected slot from localStorage
       const storedBooking = JSON.parse(localStorage.getItem('parkeasy_booking') || '{}');
       const storedSlot = JSON.parse(localStorage.getItem('parkeasy_selected_slot') || '{}');
-      const user = JSON.parse(localStorage.getItem('parkeasy_user') || '{}');
+      const user = JSON.parse(localStorage.getItem('parkeasy_user') || 'null') || {};
 
-      const duration = storedBooking.duration || 1;
+      const duration = parseFloat(storedBooking.duration) || 1;
       const pricePerHr = storedSlot.price || 40;
       const totalPrice = duration * pricePerHr;
+
+      // slot_id = MongoDB _id of the slot (stored as 'id' by Availability.jsx)
+      const slotMongoId = storedSlot.id || storedSlot._id || storedBooking.slotId || '';
 
       // Step 1: Create booking in DB
       const bookingRes = await bookSlot({
         user_id: user._id || '',
-        slot_id: storedSlot.id || storedSlot._id || '',
-        full_name: storedBooking.fullName || user.name || '',
+        user_email: user.email || '',   // links booking to logged-in user's dashboard even if _id is missing
+        slot_id: slotMongoId,
+        full_name: storedBooking.fullName || user.name || 'Guest',
         vehicle: storedBooking.vehicleNumber || '',
         location: storedBooking.location || '',
         floor: storedBooking.floor || 'Floor 1',
         date: storedBooking.date || '',
         time: storedBooking.time || '',
-        duration: parseInt(duration),
-        total: parseInt(totalPrice),
+        duration,
+        total: totalPrice,
       });
 
-      const bookingId = bookingRes.booking_id || '';
+      const bookingId = bookingRes?.booking_id || '';
 
       // Step 2: Process payment in DB
       const paymentRes = await makePayment({
         booking_id: bookingId,
         amount: totalPrice,
-        method: method,
+        method,
       });
 
-      setTxnId(paymentRes.txn_id || `PE-${Date.now()}`);
+      setTxnId(paymentRes?.txn_id || `PE-${Date.now()}`);
       setPaid(true);
       onSuccess?.();
     } catch (err) {
@@ -93,10 +98,17 @@ const PaymentForm = ({ booking, onSuccess }) => {
         </div>
         <h3 className="text-[20px] font-extrabold text-gray-900 mb-1">Payment Successful!</h3>
         <p className="text-[13px] text-gray-500 mb-6">Your slot is confirmed. Drive safely! 🚗</p>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left mb-5">
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Transaction ID</p>
           <p className="text-gray-800 font-mono font-bold text-[13px]">{txnId}</p>
         </div>
+        <Link
+          to="/dashboard"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-[13.5px] font-bold text-white"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
+        >
+          View My Dashboard →
+        </Link>
       </div>
     );
   }
@@ -117,19 +129,18 @@ const PaymentForm = ({ booking, onSuccess }) => {
       {/* Method Toggle */}
       <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
         {[
-          { id: 'card', label: 'Card',  Icon: FaCreditCard },
-          { id: 'upi',  label: 'UPI',   Icon: FaMobileAlt  },
+          { id: 'card', label: 'Card', Icon: FaCreditCard },
+          { id: 'upi', label: 'UPI', Icon: FaMobileAlt },
         ].map(({ id, label, Icon }) => (
           <button
             key={id}
             type="button"
             id={`payment-tab-${id}`}
             onClick={() => setMethod(id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
-              method === id
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${method === id
                 ? 'bg-white text-violet-700 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             <Icon className="text-[12px]" /> {label}
           </button>
@@ -212,9 +223,9 @@ const PaymentForm = ({ booking, onSuccess }) => {
             <p className="text-[11px] text-gray-400 mt-2">Supports PhonePe, GPay, Paytm & all UPI apps</p>
             <div className="flex gap-2 mt-3">
               {[
-                { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon  width="1.2em" height="1.2em" />, suffix: '@ybl',     color: '#6d28d9', bg: '#f5f3ff', border: '#7c3aed' },
-                { id: 'gpay',    label: 'GPay',     icon: <GooglePayIcon width="1.2em" height="1.2em" />, suffix: '@okicici', color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' },
-                { id: 'paytm',   label: 'Paytm',    icon: <PaytmIcon     width="1.2em" height="1.2em" />, suffix: '@paytm',   color: '#0d7377', bg: '#f0fdfa', border: '#14b8a6' },
+                { id: 'phonepe', label: 'PhonePe', icon: <PhonePeIcon width="1.2em" height="1.2em" />, suffix: '@ybl', color: '#6d28d9', bg: '#f5f3ff', border: '#7c3aed' },
+                { id: 'gpay', label: 'GPay', icon: <GooglePayIcon width="1.2em" height="1.2em" />, suffix: '@okicici', color: '#1d4ed8', bg: '#eff6ff', border: '#3b82f6' },
+                { id: 'paytm', label: 'Paytm', icon: <PaytmIcon width="1.2em" height="1.2em" />, suffix: '@paytm', color: '#0d7377', bg: '#f0fdfa', border: '#14b8a6' },
               ].map((app) => {
                 const isSelected = selectedUpiApp === app.id;
                 return (
@@ -231,11 +242,11 @@ const PaymentForm = ({ booking, onSuccess }) => {
                     }}
                     className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-all duration-200 text-[11px] font-bold"
                     style={{
-                      borderColor:  isSelected ? app.border : '#e5e7eb',
-                      background:   isSelected ? app.bg     : '#fff',
-                      color:        isSelected ? app.color  : '#6b7280',
-                      boxShadow:    isSelected ? `0 0 0 3px ${app.border}33` : 'none',
-                      transform:    isSelected ? 'translateY(-2px)' : 'none',
+                      borderColor: isSelected ? app.border : '#e5e7eb',
+                      background: isSelected ? app.bg : '#fff',
+                      color: isSelected ? app.color : '#6b7280',
+                      boxShadow: isSelected ? `0 0 0 3px ${app.border}33` : 'none',
+                      transform: isSelected ? 'translateY(-2px)' : 'none',
                     }}
                   >
                     <span className="flex items-center justify-center text-xl leading-none w-6 h-6">{app.icon}</span>

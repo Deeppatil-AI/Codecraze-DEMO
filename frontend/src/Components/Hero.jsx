@@ -74,7 +74,7 @@ const Hero = () => (
             Book a Slot <FaArrowRight className="text-xs opacity-80" />
           </Link>
           <Link
-            to="/book"
+            to="/availability"
             id="hero-availability-btn"
             className="btn-ghost text-[15px] px-7 py-3.5 rounded-xl !bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
           >

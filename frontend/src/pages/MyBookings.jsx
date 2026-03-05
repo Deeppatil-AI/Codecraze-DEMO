@@ -22,16 +22,15 @@ const MyBookings = () => {
     if (stored) {
       const parsed = JSON.parse(stored);
       setUser(parsed);
-      // Fetch real bookings from API
+
       setLoading(true);
-      getBookings()
+      const params = {};
+      if (parsed._id)   params.user_id    = parsed._id;
+      if (parsed.email) params.user_email = parsed.email;
+
+      getBookings(params)
         .then((res) => {
-          const allBookings = res.bookings || res || [];
-          // Filter by user if user has _id
-          const userBookings = parsed._id
-            ? allBookings.filter((b) => b.user_id === parsed._id)
-            : allBookings;
-          setBookings(userBookings);
+          setBookings(res.bookings || res || []);
         })
         .catch((err) => {
           console.error('Failed to fetch bookings:', err);

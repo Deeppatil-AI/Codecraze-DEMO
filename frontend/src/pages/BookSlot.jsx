@@ -18,7 +18,7 @@ const LOCATIONS = [
   'Railway Station Lot',
 ];
 const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
-const DURATIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
+const DURATIONS = ['0.5', '1', '1.5', '2', '2.5', '3', '4', '6', '8', '12', '24'];
 const RATE_PER_HOUR = 40;
 
 /* ──────────────────── helpers ──────────────────── */
@@ -57,7 +57,7 @@ const BookSlot = () => {
   const [success, setSuccess] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
-  const totalAmount = form.duration ? parseInt(form.duration, 10) * (preselected?.price || RATE_PER_HOUR) : 0;
+  const totalAmount = form.duration ? parseFloat(form.duration) * (preselected?.price || RATE_PER_HOUR) : 0;
 
   /* ── Check for pre-selected slot on mount ── */
   useEffect(() => {
@@ -311,19 +311,7 @@ const BookSlot = () => {
                 </div>
               </div>
 
-              {/* Availability tip */}
-              {!preselected && (
-                <div className="mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-violet-50/60 border border-violet-100">
-                  <FaInfoCircle className="text-violet-400 text-[12px] mt-0.5 flex-shrink-0" />
-                  <p className="text-[12px] text-violet-700">
-                    <span className="font-semibold">Tip:</span> Not sure which slot to pick?{' '}
-                    <Link to="/availability" className="font-bold underline underline-offset-2 hover:text-violet-900 transition">
-                      Check availability
-                    </Link>{' '}
-                    first and select a specific slot.
-                  </p>
-                </div>
-              )}
+            
             </div>
 
             {/* Divider */}

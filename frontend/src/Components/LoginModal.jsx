@@ -52,17 +52,20 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
         const userData = { email: match.email, name: 'Admin', role: 'admin' };
         localStorage.setItem('parkeasy_user', JSON.stringify(userData));
+        window.dispatchEvent(new CustomEvent('userLoggedIn'));
         if (onLoginSuccess) onLoginSuccess(userData, 'admin');
         else onClose();
       } else {
         /* ── User login: call API ── */
         const res = await loginUser({ email: form.email, password: form.password });
-        const userData = res.user || { email: form.email, name: form.email.split('@')[0], role: 'user' };
+        // Merge to ensure email is always present even if backend omits it
+        const userData = { email: form.email, role: 'user', ...( res.user || { name: form.email.split('@')[0] }) };
         // Make sure admin emails aren't sneaking in via user tab
         if (ADMIN_EMAILS.includes(form.email.toLowerCase())) {
           throw new Error('Use the Admin tab to login as admin.');
         }
         localStorage.setItem('parkeasy_user', JSON.stringify(userData));
+        window.dispatchEvent(new CustomEvent('userLoggedIn'));
         if (onLoginSuccess) onLoginSuccess(userData, 'user');
         else onClose();
       }

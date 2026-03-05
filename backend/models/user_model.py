@@ -2,12 +2,16 @@ from config.db import users_collection
 from bson import ObjectId
 
 
-def create_user(name, email, password):
+def create_user(name, email, password, role="user"):
     """Insert a new user and return the inserted id as string."""
+    from datetime import datetime
     result = users_collection.insert_one({
         "name": name,
         "email": email,
         "password": password,
+        "role": role,
+        "status": "active",
+        "created_at": datetime.utcnow().isoformat(),
     })
     return str(result.inserted_id)
 

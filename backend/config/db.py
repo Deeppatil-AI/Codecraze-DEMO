@@ -22,43 +22,55 @@ payments_collection = db["payments"]
 def init_db():
     """
     Seed the database with sample parking slots if the slots collection is empty.
+    Locations and floors are kept in sync with the frontend Availability.jsx constants.
     """
 
-    if slots_collection.count_documents({}) == 0:
-        locations = [
-            "Downtown Parking Hub",
-            "Airport Terminal A",
-            "Mall Central Parking",
-            "City Square",
-            "Tech Park",
-        ]
+    # ── Frontend Availability.jsx constants (keep in sync) ──────────────────
+    LOCATIONS = [
+        "CityMall",
+        "Downtown Parking Hub",
+        "Airport Terminal A",
+        "Airport Terminal B",
+        "Mall Central Parking",
+        "Tech Park Zone 1",
+        "Railway Station Lot",
+    ]
+    FLOORS = ["Floor 1", "Floor 2", "Floor 3", "Floor 4", "Basement"]
+    # ────────────────────────────────────────────────────────────────────────
 
-        floors = ["Floor 1", "Floor 2", "Floor 3"]
+    existing_count = slots_collection.count_documents({})
+    existing_locations = set(slots_collection.distinct("location")) if existing_count > 0 else set()
+    expected_locations = set(LOCATIONS)
+
+    # Reseed if empty OR if stored locations no longer match the frontend list
+    if existing_count == 0 or not expected_locations.issubset(existing_locations):
+        if existing_count > 0:
+            slots_collection.drop()
+            print("🔄 Reseeding slots — location list has changed")
+
         rows = ["A", "B", "C", "D"]
         cols = [1, 2, 3, 4]
         prices = [30, 40, 50, 60]
 
-        import random
-
         slot_data = []
-
-        for loc in locations:
-            for flr in floors:
+        price_idx = 0
+        for loc in LOCATIONS:
+            for flr in FLOORS:
                 for row in rows:
                     for col in cols:
                         slot_data.append({
                             "slot_number": f"{row}{col}",
                             "location": loc,
                             "floor": flr,
-                            "status": random.choice(["available", "available", "occupied"]),
-                            "price": random.choice(prices),
+                            "status": "available",
+                            "price": prices[price_idx % len(prices)],
                         })
+                        price_idx += 1
 
         slots_collection.insert_many(slot_data)
         print(f"✅ Seeded {len(slot_data)} parking slots into MongoDB")
-
     else:
-        print(f"ℹ️  Slots collection already has {slots_collection.count_documents({})} documents")
+        print(f"ℹ️  Slots collection already has {existing_count} documents")
 
     # Create indexes for faster queries
     users_collection.create_index("email", unique=True)

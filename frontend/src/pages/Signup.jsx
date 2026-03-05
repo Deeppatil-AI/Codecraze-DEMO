@@ -59,14 +59,13 @@ const Signup = () => {
         email: form.email,
         password: form.password,
       });
-      localStorage.setItem(
-        'parkeasy_user',
-        JSON.stringify(res.user || { email: form.email, name: form.name }),
-      );
+      // Always store a complete user object so Navbar & Dashboard can read it
+      const newUser = { email: form.email, name: form.name, role: 'user', ...(res.user || {}) };
+      localStorage.setItem('parkeasy_user', JSON.stringify(newUser));
+      window.dispatchEvent(new CustomEvent('userLoggedIn')); // sync App.jsx Navbar instantly
       setSuccess(true);
       setTimeout(() => {
-        navigate('/');
-        window.dispatchEvent(new Event('openLogin'));
+        navigate('/dashboard'); // go straight to dashboard — they're already logged in
       }, 1400);
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -146,7 +145,7 @@ const Signup = () => {
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
                   <FaCheckCircle className="text-emerald-500 text-4xl" />
                   <p className="text-[15px] font-bold text-gray-800">Account created!</p>
-                  <p className="text-[12px] text-gray-400">Redirecting you to the dashboard…</p>
+                  <p className="text-[12px] text-gray-400">Redirecting you to your dashboard…</p>
                 </div>
               ) : (
                 <>

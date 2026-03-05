@@ -3,19 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   FaRupeeSign, FaBookmark, FaCheckCircle, FaClock,
   FaCalendarAlt, FaMapMarkerAlt, FaBan, FaLock,
-  FaChartBar, FaUser, FaCarAlt, FaTrophy, FaArrowUp, FaArrowDown,
+  FaChartBar, FaUser, FaCarAlt, FaTrophy, FaArrowUp, FaArrowDown, FaSync,
 } from 'react-icons/fa';
 import { getBookings } from '../services/api';
 
 /* ── helpers ──────────────────────────────────────────────────── */
-const MOCK_BOOKINGS = [
-  { _id: 'bk001', location: 'MG Road Parking', slot_id: 'A-12', vehicle: 'KA01AB1234', date: '2026-03-04', time: '10:00', duration: 3, total: 90,  status: 'completed' },
-  { _id: 'bk002', location: 'Forum Mall Parking', slot_id: 'B-05', vehicle: 'KA01AB1234', date: '2026-03-03', time: '14:30', duration: 2, total: 60,  status: 'completed' },
-  { _id: 'bk003', location: 'Brigade Road Parking', slot_id: 'C-08', vehicle: 'KA01AB1234', date: '2026-03-02', time: '09:00', duration: 4, total: 120, status: 'completed' },
-  { _id: 'bk004', location: 'Koramangala Hub', slot_id: 'D-03', vehicle: 'KA01AB1234', date: '2026-03-05', time: '11:00', duration: 2, total: 60,  status: 'active'    },
-  { _id: 'bk005', location: 'HSR Layout Parking', slot_id: 'A-07', vehicle: 'KA01AB1234', date: '2026-02-28', time: '16:00', duration: 1, total: 30,  status: 'cancelled' },
-];
-
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 const statusCfg = {
@@ -87,24 +79,29 @@ const Dashboard = () => {
   const [loading, setLoading]   = useState(false);
   const [tab, setTab]           = useState('all');
 
+  const fetchBookings = (parsed) => {
+    if (!parsed) return;
+    setLoading(true);
+    const params = {};
+    if (parsed._id || parsed.id) params.user_id    = parsed._id || parsed.id;
+    if (parsed.email)            params.user_email = parsed.email;
+    getBookings(params)
+      .then((res) => {
+        const all = res.bookings || res || [];
+        setBookings(all);
+      })
+      .catch(() => setBookings([]))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('parkeasy_user');
     if (stored) {
       const parsed = JSON.parse(stored);
       setUser(parsed);
-      setLoading(true);
-      getBookings()
-        .then((res) => {
-          const all = res.bookings || res || [];
-          const filtered = parsed._id
-            ? all.filter(b => b.user_id === parsed._id)
-            : all;
-          setBookings(filtered.length ? filtered : MOCK_BOOKINGS);
-        })
-        .catch(() => setBookings(MOCK_BOOKINGS))
-        .finally(() => setLoading(false));
+      fetchBookings(parsed);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── derived stats ── */
   const totalBookings = bookings.length;
@@ -187,13 +184,23 @@ const Dashboard = () => {
             </h1>
             <p className="text-[13px] text-gray-400 mt-1">Here's a summary of your parking activity</p>
           </div>
-          <Link
-            to="/book"
-            className="btn-primary px-6 py-2.5 text-[13.5px] flex-shrink-0"
-            id="dashboard-book-btn"
-          >
-            + Book a Slot
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchBookings(user)}
+              disabled={loading}
+              title="Refresh bookings"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-violet-700 hover:border-violet-300 transition disabled:opacity-50"
+            >
+              <FaSync className={`text-[12px] ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <Link
+              to="/book"
+              className="btn-primary px-6 py-2.5 text-[13.5px] flex-shrink-0"
+              id="dashboard-book-btn"
+            >
+              + Book a Slot
+            </Link>
+          </div>
         </div>
 
         {/* ── Top Stat Cards ── */}

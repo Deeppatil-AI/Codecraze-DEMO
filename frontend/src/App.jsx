@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 
 import Navbar from './Components/Navbar';
 import LoginModal from './Components/LoginModal';
@@ -20,6 +20,7 @@ import AdminPanel from './pages/AdminPanel';
 /* ───────────────────────────────────────────────────────────── */
 function AppInner() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [user, setUser] = useState(() => {
@@ -36,6 +37,25 @@ function AppInner() {
     const handler = () => setLoginOpen(true);
     window.addEventListener('openLogin', handler);
     return () => window.removeEventListener('openLogin', handler);
+  }, []);
+
+  // Sync user state if localStorage is updated externally (e.g. Signup page, cross-tab)
+  useEffect(() => {
+    const syncUser = () => {
+      try {
+        const stored = localStorage.getItem('parkeasy_user');
+        setUser(stored ? JSON.parse(stored) : null);
+      } catch {
+        setUser(null);
+      }
+    };
+    // 'storage' fires on cross-tab changes; 'userLoggedIn' fires same-tab (dispatched by Signup etc.)
+    window.addEventListener('storage', syncUser);
+    window.addEventListener('userLoggedIn', syncUser);
+    return () => {
+      window.removeEventListener('storage', syncUser);
+      window.removeEventListener('userLoggedIn', syncUser);
+    };
   }, []);
 
   /**
@@ -62,8 +82,8 @@ function AppInner() {
 
   return (
     <>
-      {/* Navbar is hidden when viewing the Admin Panel as admin */}
-      {!isAdmin && (
+      {/* Navbar is hidden only on the Admin Panel page itself */}
+      {location.pathname !== '/admin' && (
         <Navbar
           onLoginClick={() => setLoginOpen(true)}
           user={user}
