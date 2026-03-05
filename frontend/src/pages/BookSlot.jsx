@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   FaCar, FaMapMarkerAlt, FaCalendarAlt, FaClock, FaChevronDown,
-  FaUser, FaLayerGroup, FaParking, FaCheckCircle, FaTimesCircle,
-  FaSync, FaArrowLeft, FaArrowRight, FaRupeeSign, FaSearch,
+  FaUser, FaLayerGroup, FaParking, FaCheckCircle,
+  FaArrowRight, FaRupeeSign, FaEye, FaTimes, FaInfoCircle,
 } from 'react-icons/fa';
-import StatsCard from '../Components/StatsCard';
+import { getSlots, bookSlot } from '../services/api';
 
 /* ──────────────────── constants ──────────────────── */
 const LOCATIONS = [
@@ -18,12 +18,15 @@ const LOCATIONS = [
   'Railway Station Lot',
 ];
 const FLOORS = ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Basement'];
-const DURATIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
+const DURATIONS = ['0.5', '1', '1.5', '2', '2.5', '3', '4', '6', '8', '12', '24'];
 const RATE_PER_HOUR = 40;
 
+<<<<<<< HEAD
 // Generate random prices as fallback
 const defaultPrices = [30, 40, 50, 60];
 
+=======
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
 /* ──────────────────── helpers ──────────────────── */
 const SelectWrapper = ({ icon: Icon, children }) => (
   <div className="relative">
@@ -36,13 +39,13 @@ const SelectWrapper = ({ icon: Icon, children }) => (
 );
 
 /* ══════════════════════════════════════════════════
-   MAIN COMPONENT
+   BOOK SLOT PAGE — Dedicated booking form
    ══════════════════════════════════════════════════ */
 const BookSlot = () => {
   const navigate = useNavigate();
 
-  /* ── step management ── */
-  const [step, setStep] = useState(1); // 1 = form, 2 = availability
+  /* ── pre-selected slot from Availability page ── */
+  const [preselected, setPreselected] = useState(null);
 
   /* ── form state ── */
   const [form, setForm] = useState({
@@ -53,21 +56,42 @@ const BookSlot = () => {
     location: '',
     floor: 'Floor 1',
     duration: '',
+    slotId: '',
   });
 
-  /* ── availability state ── */
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('all');
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
-  const totalAmount = form.duration ? parseInt(form.duration, 10) * RATE_PER_HOUR : 0;
+  const totalAmount = form.duration ? parseFloat(form.duration) * (preselected?.price || RATE_PER_HOUR) : 0;
+
+  /* ── Check for pre-selected slot on mount ── */
+  useEffect(() => {
+    const stored = localStorage.getItem('parkmate_preselected_slot');
+    if (stored) {
+      try {
+        const slot = JSON.parse(stored);
+        setPreselected(slot);
+        setForm((prev) => ({
+          ...prev,
+          location: slot.location || prev.location,
+          floor: slot.floor || prev.floor,
+          slotId: slot.slotId || '',
+        }));
+        // Clear it after reading
+        localStorage.removeItem('parkmate_preselected_slot');
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+<<<<<<< HEAD
   /* ── step 1 → 2 ── */
   const handleFindSlots = async (e) => {
     e.preventDefault();
@@ -130,6 +154,38 @@ const BookSlot = () => {
   const availableSlots = slots.filter((s) => s.status === 'available').length;
   const occupiedSlots = slots.filter((s) => s.status === 'occupied').length;
 
+=======
+  const clearPreselected = () => {
+    setPreselected(null);
+    setForm((prev) => ({ ...prev, slotId: '' }));
+  };
+
+  /* ── Submit booking ── */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const bookingData = {
+      ...form,
+      totalAmount,
+      slotId: preselected?.slotId || form.slotId || 'Auto-assign',
+      slotPrice: preselected?.price || RATE_PER_HOUR,
+    };
+
+    // Store in localStorage for downstream (payment, etc.)
+    localStorage.setItem('parkmate_booking', JSON.stringify(bookingData));
+    if (preselected) {
+      localStorage.setItem('parkmate_selected_slot', JSON.stringify(preselected));
+    }
+
+    // Navigate to payment
+    setTimeout(() => {
+      setSubmitting(false);
+      navigate('/payment');
+    }, 800);
+  };
+
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   /* ══════════════ RENDER ══════════════ */
   return (
     <div className="page-bg pt-[60px]">
@@ -137,7 +193,7 @@ const BookSlot = () => {
       <div className="pointer-events-none fixed top-1/4 -left-32 w-96 h-96 bg-violet-300/20 rounded-full blur-[100px]" />
       <div className="pointer-events-none fixed bottom-1/4 -right-32 w-96 h-96 bg-blue-300/15 rounded-full blur-[100px]" />
 
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12 relative">
+      <div className="max-w-3xl mx-auto px-5 sm:px-8 py-12 relative">
 
         {/* ── Page Header ── */}
         <div className="mb-8">
@@ -145,12 +201,14 @@ const BookSlot = () => {
             Book a <span className="gradient-text">Parking Slot</span>
           </h1>
           <p className="text-gray-500 text-[14px] mt-2 max-w-lg">
-            {step === 1
-              ? 'Fill in your details and find available parking slots in real time.'
-              : <>Showing slots at <span className="text-violet-600 font-semibold">{form.location}</span> · <span className="text-violet-600 font-semibold">{form.floor}</span></>}
+            Fill in your details below and proceed to payment. Need to check what's available first?{' '}
+            <Link to="/availability" className="text-violet-600 font-semibold hover:text-violet-800 underline underline-offset-2 transition">
+              View Availability →
+            </Link>
           </p>
         </div>
 
+<<<<<<< HEAD
         {/* ── Step Indicator ── */}
         <div className="flex items-center gap-0 mb-8">
           {/* Step 1 */}
@@ -216,24 +274,100 @@ const BookSlot = () => {
                     placeholder="e.g., Rahul Sharma" required
                     className="input-field input-field-icon" id="booking-name-input"
                   />
+=======
+        {/* ── Pre-selected Slot Banner ── */}
+        {preselected && (
+          <div className="card-static overflow-hidden mb-6 animate-fade-up">
+            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+            <div className="px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md"
+                  style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}
+                >
+                  <FaParking className="text-[16px]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-bold text-gray-800">
+                      Slot {preselected.slotId} selected
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600/10 text-emerald-700">
+                      <FaCheckCircle className="text-[8px]" /> Available
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-gray-500 flex items-center gap-1.5">
+                    <FaMapMarkerAlt className="text-[10px] text-violet-400" />
+                    {preselected.location} · {preselected.floor}
+                    <span className="mx-1">·</span>
+                    <FaRupeeSign className="text-[10px] text-violet-400" />
+                    {preselected.price}/hr
+                  </p>
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
                 </div>
               </div>
+              <button
+                onClick={clearPreselected}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+                title="Remove selected slot"
+              >
+                <FaTimes className="text-[11px]" />
+              </button>
+            </div>
+          </div>
+        )}
 
-              {/* Vehicle Number */}
-              <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Vehicle Number</label>
-                <div className="relative">
-                  <FaCar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 text-[13px]" />
-                  <input
-                    type="text" name="vehicleNumber" value={form.vehicleNumber} onChange={handleChange}
-                    placeholder="e.g., MH01AB1234" required
-                    className="input-field input-field-icon uppercase font-mono tracking-wider" id="booking-vehicle-input"
-                  />
+        {/* ── Booking Form ── */}
+        <form onSubmit={handleSubmit} className="card-static overflow-hidden animate-fade-up">
+          {/* Gradient top bar */}
+          <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #7c3aed, #4f46e5, #2563eb)' }} />
+
+          <div className="p-8 space-y-5">
+
+            {/* ─ Section: Personal Info ─ */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <FaUser className="text-violet-400" /> Personal Information
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Full Name</label>
+                  <div className="relative">
+                    <FaUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 text-[12px]" />
+                    <input
+                      type="text" name="fullName" value={form.fullName} onChange={handleChange}
+                      placeholder="e.g., Rahul Sharma" required
+                      className="input-field input-field-icon" id="booking-name-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Vehicle Number */}
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Vehicle Number</label>
+                  <div className="relative">
+                    <FaCar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 text-[13px]" />
+                    <input
+                      type="text" name="vehicleNumber" value={form.vehicleNumber} onChange={handleChange}
+                      placeholder="e.g., MH01AB1234" required
+                      className="input-field input-field-icon uppercase font-mono tracking-wider" id="booking-vehicle-input"
+                    />
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Date + Time */}
-              <div className="grid grid-cols-2 gap-4">
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
+
+            {/* ─ Section: Schedule ─ */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <FaCalendarAlt className="text-violet-400" /> Schedule
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Date */}
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Date</label>
                   <div className="relative">
@@ -245,6 +379,7 @@ const BookSlot = () => {
                     />
                   </div>
                 </div>
+                {/* Time */}
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Time</label>
                   <div className="relative">
@@ -255,10 +390,34 @@ const BookSlot = () => {
                     />
                   </div>
                 </div>
+                {/* Duration */}
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Duration (hours)</label>
+                  <SelectWrapper>
+                    <select
+                      name="duration" value={form.duration} onChange={handleChange} required
+                      className="input-field pr-9 appearance-none cursor-pointer" id="booking-duration-select"
+                    >
+                      <option value="" disabled>Select Duration</option>
+                      {DURATIONS.map((d) => (
+                        <option key={d} value={d}>{d} hour{d !== '1' ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </SelectWrapper>
+                </div>
               </div>
+            </div>
 
-              {/* Location + Floor */}
-              <div className="grid grid-cols-2 gap-4">
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
+
+            {/* ─ Section: Location ─ */}
+            <div>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                <FaMapMarkerAlt className="text-violet-400" /> Parking Location
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Location */}
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Location</label>
                   <SelectWrapper icon={FaMapMarkerAlt}>
@@ -274,6 +433,7 @@ const BookSlot = () => {
                     </select>
                   </SelectWrapper>
                 </div>
+                {/* Floor */}
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Floor</label>
                   <SelectWrapper icon={FaLayerGroup}>
@@ -290,79 +450,60 @@ const BookSlot = () => {
                 </div>
               </div>
 
-              {/* Duration */}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
+
+            {/* ── Total Amount ── */}
+            <div
+              className="flex items-center justify-between rounded-xl px-5 py-4 text-white"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5, #2563eb)' }}
+            >
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Duration (hours)</label>
-                <SelectWrapper>
-                  <select
-                    name="duration" value={form.duration} onChange={handleChange} required
-                    className="input-field pr-9 appearance-none cursor-pointer" id="booking-duration-select"
-                  >
-                    <option value="" disabled>Select Duration</option>
-                    {DURATIONS.map((d) => (
-                      <option key={d} value={d}>{d} hour{d !== '1' ? 's' : ''}</option>
-                    ))}
-                  </select>
-                </SelectWrapper>
+                <p className="text-[11px] font-medium text-white/70 uppercase tracking-widest">Estimated Total</p>
+                <p className="text-[22px] font-extrabold tracking-tight mt-0.5">
+                  ₹{totalAmount}
+                </p>
               </div>
-
-              {/* Total Amount */}
-              <div
-                className="flex items-center justify-center rounded-xl py-3.5 text-white text-[15px] font-bold tracking-wide"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5, #2563eb)' }}
-              >
-                Estimated: ₹{totalAmount} ({form.duration || '0'} hr × ₹{RATE_PER_HOUR}/hr)
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit" disabled={loading} id="booking-find-slots-btn"
-                className="w-full btn-primary py-3.5 text-[14px] rounded-xl tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Searching Slots...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <FaSearch className="text-[12px]" /> Find Available Slots
-                  </span>
+              <div className="text-right text-[12px] text-white/80">
+                <p>{form.duration || '0'} hr × ₹{preselected?.price || RATE_PER_HOUR}/hr</p>
+                {preselected && (
+                  <p className="text-[11px] mt-0.5 text-white/60">Slot {preselected.slotId}</p>
                 )}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ═══════════════════════════════════════════
-            STEP 2 — Slot Availability Grid
-            ═══════════════════════════════════════════ */}
-        {step === 2 && (
-          <div className="animate-fade-up">
-
-            {/* Booking Summary Bar */}
-            <div className="card-static px-5 py-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-gray-600">
-                <span className="flex items-center gap-1.5">
-                  <FaUser className="text-violet-500 text-[11px]" />
-                  <span className="font-semibold text-gray-800">{form.fullName}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <FaCar className="text-violet-500 text-[11px]" />
-                  <span className="font-mono font-semibold text-gray-800 uppercase">{form.vehicleNumber}</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <FaClock className="text-violet-500 text-[11px]" />
-                  <span className="font-semibold text-gray-800">{form.duration}hr · ₹{RATE_PER_HOUR}/hr</span>
-                </span>
               </div>
-              <button
-                onClick={() => setStep(1)}
-                className="flex items-center gap-1.5 text-[12px] font-bold text-violet-600 hover:text-violet-800 transition"
-              >
-                <FaArrowLeft className="text-[10px]" /> Edit Details
-              </button>
             </div>
+
+            {/* ── Submit ── */}
+            <button
+              type="submit"
+              disabled={submitting}
+              id="booking-submit-btn"
+              className="w-full btn-primary py-3.5 text-[14px] rounded-xl tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  Proceed to Payment <FaArrowRight className="text-[12px]" />
+                </span>
+              )}
+            </button>
+
+            {/* ── Quick link to availability ── */}
+            <div className="text-center">
+              <Link
+                to="/availability"
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-violet-600 hover:text-violet-800 transition"
+              >
+                <FaEye className="text-[11px]" />
+                View Available Slots First
+              </Link>
+            </div>
+<<<<<<< HEAD
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -479,8 +620,10 @@ const BookSlot = () => {
                 })}
               </div>
             )}
+=======
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
           </div>
-        )}
+        </form>
       </div>
     </div>
   );

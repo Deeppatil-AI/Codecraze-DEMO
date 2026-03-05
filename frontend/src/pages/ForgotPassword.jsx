@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { forgotPassword, verifyOtp, resetPassword } from "../services/api";
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCar, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
 import { requestResetOtp, verifyResetOtp, resetPasswordWithOtp } from '../services/api';
@@ -7,14 +8,14 @@ const STEPS = { EMAIL: 'email', OTP: 'otp', RESET: 'reset', DONE: 'done' };
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const [step, setStep]             = useState(STEPS.EMAIL);
-  const [email, setEmail]           = useState('');
-  const [otp, setOtp]               = useState(['', '', '', '', '', '']);
-  const [newPass, setNewPass]       = useState('');
+  const [step, setStep] = useState(STEPS.EMAIL);
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
-  const [showPass, setShowPass]     = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
   const otpRefs = useRef([]);
 
@@ -30,6 +31,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+<<<<<<< HEAD
     try {
       await requestResetOtp({ email });
       setStep(STEPS.OTP);
@@ -39,6 +41,12 @@ const ForgotPassword = () => {
     } finally {
       setLoading(false);
     }
+=======
+    await forgotPassword({ email });
+    setLoading(false);
+    setStep(STEPS.OTP);
+    setResendTimer(30);
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   };
 
   const handleOtpChange = (val, idx) => {
@@ -60,6 +68,7 @@ const ForgotPassword = () => {
     setError('');
     if (otp.join('').length < 6) { setError('Please enter all 6 digits.'); return; }
     setLoading(true);
+<<<<<<< HEAD
     try {
       await verifyResetOtp({ email, otp: otp.join('') });
       setStep(STEPS.RESET);
@@ -68,6 +77,14 @@ const ForgotPassword = () => {
     } finally {
       setLoading(false);
     }
+=======
+    await verifyOtp({
+      email,
+      otp: otp.join("")
+    });
+    setLoading(false);
+    setStep(STEPS.RESET);
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   };
 
   const handleResetPassword = async (e) => {
@@ -76,6 +93,7 @@ const ForgotPassword = () => {
     if (newPass !== confirmPass) { setError('Passwords do not match.'); return; }
     if (newPass.length < 6) { setError('Password must be at least 6 characters.'); return; }
     setLoading(true);
+<<<<<<< HEAD
     try {
       await resetPasswordWithOtp({ email, otp: otp.join(''), password: newPass });
       setStep(STEPS.DONE);
@@ -85,6 +103,17 @@ const ForgotPassword = () => {
     } finally {
       setLoading(false);
     }
+=======
+    await resetPassword({
+      email,
+      newPassword: newPass
+    }); setLoading(false);
+    setStep(STEPS.DONE);
+    setTimeout(() => {
+      navigate('/');
+      window.dispatchEvent(new Event('openLogin'));
+    }, 2000);
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   };
 
   const stepIndex = { [STEPS.EMAIL]: 1, [STEPS.OTP]: 2, [STEPS.RESET]: 3, [STEPS.DONE]: 3 };
@@ -118,12 +147,12 @@ const ForgotPassword = () => {
                 <>
                   <h1 className="text-[20px] font-extrabold text-gray-900 text-center tracking-tight">
                     {step === STEPS.EMAIL && 'Forgot your password?'}
-                    {step === STEPS.OTP   && 'Check your inbox'}
+                    {step === STEPS.OTP && 'Check your inbox'}
                     {step === STEPS.RESET && 'Set a new password'}
                   </h1>
                   <p className="text-[12px] text-gray-400 mt-1 text-center">
                     {step === STEPS.EMAIL && "No worries! Enter your email and we'll send a code."}
-                    {step === STEPS.OTP   && `We sent a 6-digit code to ${email}`}
+                    {step === STEPS.OTP && `We sent a 6-digit code to ${email}`}
                     {step === STEPS.RESET && 'Choose a strong password you haven\'t used before.'}
                   </p>
                 </>

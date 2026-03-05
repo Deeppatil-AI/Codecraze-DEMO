@@ -1,10 +1,10 @@
 import ContactForm from '../Components/ContactForm';
 
 const contactInfo = [
-  { emoji: '📞', bg: 'bg-violet-100', label: 'Call Us',       value: '+91 98765 43210',     sub: 'Mon–Sat, 9 AM–8 PM' },
-  { emoji: '📧', bg: 'bg-blue-100',   label: 'Email Us',      value: 'support@parkeasy.in', sub: 'Reply within 24h' },
-  { emoji: '📍', bg: 'bg-indigo-100', label: 'Office',        value: 'Bandra Kurla Complex',sub: 'Mumbai, MH 400051' },
-  { emoji: '⏰', bg: 'bg-emerald-100',label: 'Support Hours', value: '24/7 Available',      sub: 'Emergency helpline' },
+  { emoji: '📞', bg: 'bg-violet-100', label: 'Call Us', value: '+91 98765 43210', sub: 'Mon–Sat, 9 AM–8 PM' },
+  { emoji: '📧', bg: 'bg-blue-100', label: 'Email Us', value: 'support@parkmate.in', sub: 'Reply within 24h' },
+  { emoji: '📍', bg: 'bg-indigo-100', label: 'Office', value: 'Bandra Kurla Complex', sub: 'Mumbai, MH 400051' },
+  { emoji: '⏰', bg: 'bg-emerald-100', label: 'Support Hours', value: '24/7 Available', sub: 'Emergency helpline' },
 ];
 
 const Contact = () => (
@@ -47,13 +47,13 @@ const Contact = () => (
           <div className="card-static p-6">
             <h3 className="text-[14px] font-bold text-gray-900 mb-3">Let's Talk 🤝</h3>
             <p className="text-[13px] text-gray-500 leading-relaxed mb-5">
-              Our team is always ready to assist with parking queries, technical issues, or any general questions about ParkEasy.
+              Our team is always ready to assist with parking queries, technical issues, or any general questions about ParkMate.
             </p>
 
             <div className="space-y-3.5">
               {[
-                { emoji: '📞', label: 'Phone',    value: '+91 98765 43210' },
-                { emoji: '📧', label: 'Email',    value: 'support@parkeasy.in' },
+                { emoji: '📞', label: 'Phone', value: '+91 98765 43210' },
+                { emoji: '📧', label: 'Email', value: 'support@parkmate.in' },
                 { emoji: '📍', label: 'Location', value: 'BKC, Mumbai 400051' },
               ].map((item, i) => (
                 <div key={i} className="row-hover flex items-center gap-3 py-2 px-1 rounded-lg">
@@ -73,7 +73,7 @@ const Contact = () => (
           <div className="card-static overflow-hidden">
             <div className="w-full h-44">
               <iframe
-                title="ParkEasy Office"
+                title="ParkMate Office"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.2!2d72.865!3d19.0698!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sBandra+Kurla+Complex!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
                 className="w-full h-full border-0 opacity-90 hover:opacity-100 transition-opacity duration-300"
                 allowFullScreen loading="lazy"

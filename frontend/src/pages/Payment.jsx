@@ -10,6 +10,7 @@ const Payment = () => {
   useEffect(() => {
     const s = localStorage.getItem('parkmate_selected_slot');
     const b = localStorage.getItem('parkmate_booking');
+<<<<<<< HEAD
 
     if (s && b) {
       setSlot(JSON.parse(s));
@@ -18,6 +19,10 @@ const Payment = () => {
       setSlot(null);
       setBooking(null);
     }
+=======
+    if (s) setSlot(JSON.parse(s));
+    if (b) setBooking(JSON.parse(b));
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
   }, []);
 
   const duration = booking?.duration || 0;

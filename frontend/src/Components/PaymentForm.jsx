@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FaCreditCard, FaMobileAlt, FaLock, FaCheckCircle } from 'react-icons/fa';
+import { bookSlot, makePayment } from '../services/api';
 
 const PhonePeIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -27,6 +29,8 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [paid, setPaid] = useState(false);
 
+  const [txnId, setTxnId] = useState('');
+
   const formatCard = (val) =>
     val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
 
@@ -38,6 +42,7 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+<<<<<<< HEAD
 
     try {
       const token = localStorage.getItem('parkmate_token') || localStorage.getItem('parkeasy_token');
@@ -97,6 +102,51 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
     } catch (err) {
       console.error(err);
       alert(err.message || 'Error occurred while booking.');
+=======
+    try {
+      // Get booking info and selected slot from localStorage
+      const storedBooking = JSON.parse(localStorage.getItem('parkmate_booking') || '{}');
+      const storedSlot = JSON.parse(localStorage.getItem('parkmate_selected_slot') || '{}');
+      const user = JSON.parse(localStorage.getItem('parkmate_user') || 'null') || {};
+
+      const duration = parseFloat(storedBooking.duration) || 1;
+      const pricePerHr = storedSlot.price || 40;
+      const totalPrice = duration * pricePerHr;
+
+      // slot_id = MongoDB _id of the slot (stored as 'id' by Availability.jsx)
+      const slotMongoId = storedSlot.id || storedSlot._id || storedBooking.slotId || '';
+
+      // Step 1: Create booking in DB
+      const bookingRes = await bookSlot({
+        user_id: user._id || '',
+        user_email: user.email || '',   // links booking to logged-in user's dashboard even if _id is missing
+        slot_id: slotMongoId,
+        full_name: storedBooking.fullName || user.name || 'Guest',
+        vehicle: storedBooking.vehicleNumber || '',
+        location: storedBooking.location || '',
+        floor: storedBooking.floor || 'Floor 1',
+        date: storedBooking.date || '',
+        time: storedBooking.time || '',
+        duration,
+        total: totalPrice,
+      });
+
+      const bookingId = bookingRes?.booking_id || '';
+
+      // Step 2: Process payment in DB
+      const paymentRes = await makePayment({
+        booking_id: bookingId,
+        amount: totalPrice,
+        method,
+      });
+
+      setTxnId(paymentRes?.txn_id || `PE-${Date.now()}`);
+      setPaid(true);
+      onSuccess?.();
+    } catch (err) {
+      console.error('Payment failed:', err);
+      alert(err.message || 'Payment failed. Please try again.');
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
     } finally {
       setLoading(false);
     }
@@ -110,10 +160,17 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
         </div>
         <h3 className="text-[20px] font-extrabold text-gray-900 mb-1">Payment Successful!</h3>
         <p className="text-[13px] text-gray-500 mb-6">Your slot is confirmed. Drive safely! 🚗</p>
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-left mb-5">
           <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Transaction ID</p>
-          <p className="text-gray-800 font-mono font-bold text-[13px]">PE-{Date.now()}</p>
+          <p className="text-gray-800 font-mono font-bold text-[13px]">{txnId}</p>
         </div>
+        <Link
+          to="/dashboard"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl text-[13.5px] font-bold text-white"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
+        >
+          View My Dashboard →
+        </Link>
       </div>
     );
   }
@@ -143,8 +200,13 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
             id={`payment-tab-${id}`}
             onClick={() => setMethod(id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${method === id
+<<<<<<< HEAD
               ? 'bg-white text-violet-700 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
+=======
+                ? 'bg-white text-violet-700 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+>>>>>>> cd40eec0c57980619ee6661b0859d697544281e1
               }`}
           >
             <Icon className="text-[12px]" /> {label}
