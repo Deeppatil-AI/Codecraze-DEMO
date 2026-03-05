@@ -37,7 +37,7 @@ const Navbar = ({ onLoginClick }) => {
             <div className="w-8 h-8 rounded-[9px] icon-purple flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105">
               <span className="text-sm">🚗</span>
             </div>
-            <span className="text-[17px] font-bold tracking-tight gradient-text">ParkEasy</span>
+            <span className="text-[17px] font-bold tracking-tight gradient-text">ParkMate</span>
           </Link>
 
           {/* Desktop Nav */}

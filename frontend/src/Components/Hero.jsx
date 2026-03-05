@@ -109,7 +109,7 @@ const Hero = () => (
       <div className="max-w-5xl mx-auto">
         {/* Section label */}
         <div className="text-center mb-12">
-          <span className="badge mb-4">✦ Why ParkEasy</span>
+          <span className="badge mb-4">✦ Why ParkMate</span>
           <h2 className="text-[32px] sm:text-[40px] font-extrabold text-gray-900 tracking-tight leading-tight mt-3">
             Everything you need for <span className="gradient-text">smart parking</span>
           </h2>

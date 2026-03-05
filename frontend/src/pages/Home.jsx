@@ -80,7 +80,7 @@ const Home = () => (
             Ready to park smarter?
           </h2>
           <p className="text-white/60 max-w-sm mx-auto text-[14px] mb-8 relative">
-            Join 50,000+ drivers who trust ParkEasy for stress-free parking every day.
+            Join 50,000+ drivers who trust ParkMate for stress-free parking every day.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center relative">
             <Link
@@ -105,11 +105,11 @@ const Home = () => (
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg icon-purple flex items-center justify-center text-xs">🚗</div>
-          <span className="font-bold gradient-text text-[15px]">ParkEasy</span>
+          <span className="font-bold gradient-text text-[15px]">ParkMate</span>
           <span className="text-gray-200 text-sm mx-1">|</span>
           <span className="text-[12px] text-gray-400">Smart Parking Made Easy</span>
         </div>
-        <p className="text-gray-400 text-[12px]">© 2026 ParkEasy · Made with ❤️ for smarter cities</p>
+        <p className="text-gray-400 text-[12px]">© 2026 ParkMate · Made with ❤️ for smarter cities</p>
       </div>
     </footer>
   </div>
