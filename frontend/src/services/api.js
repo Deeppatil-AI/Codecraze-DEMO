@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL
-  ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`)
+  ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`)
   : (import.meta.env.PROD ? 'https://codecraze-demo.onrender.com/api' : '/api');
 
 const API = axios.create({
