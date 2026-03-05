@@ -4,7 +4,7 @@ import {
   FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash,
   FaCheckCircle, FaCar, FaArrowLeft
 } from 'react-icons/fa';
-import { requestSignupOtp, verifySignupOtp } from '../services/api';
+import { requestSignupOtp, verifySignupOtp, registerUser } from '../services/api';
 
 const perks = [
   { icon: '🚗', text: 'Book parking slots in seconds' },

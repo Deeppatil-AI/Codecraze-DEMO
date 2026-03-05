@@ -1,9 +1,10 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL
+  ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`)
+  : '/api';
 
 const API = axios.create({
-  // Use VITE_API_URL if defined (for production), otherwise fall back to /api
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
@@ -53,10 +54,14 @@ AdminAPI.interceptors.response.use(
   }
 );
 
-// Response interceptor – normalize errors
+// Response interceptor – normalize errors and log for production debugging
 API.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log(`[API SUCCESS] ${response.config.method.toUpperCase()} ${response.config.url}`);
+    return response.data;
+  },
   (error) => {
+    console.error(`[API ERROR] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, error.response?.data || error.message);
     const message =
       error?.response?.data?.error ||
       error?.response?.data?.message ||

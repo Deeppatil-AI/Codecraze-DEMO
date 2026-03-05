@@ -41,6 +41,16 @@ def create_app() -> Flask:
     app.register_blueprint(contact_bp)
     app.register_blueprint(admin_bp)
 
+    # ── Database Seed Endpoint ────────────────────────────────────────────────
+    @app.route("/api/seed", methods=["GET"])
+    def seed_db():
+        from seed_data import seed
+        try:
+            seed()
+            return jsonify({"status": "success", "message": "Database seeded successfully"}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
     # ── Health-check endpoint ─────────────────────────────────────────────────
     @app.route("/api/health", methods=["GET"])
     def health():
