@@ -35,8 +35,9 @@ const Availability = () => {
     setLoading(true);
     setError('');
     try {
-      const floorNum = flr.replace(/\D/g, '') || 1;
-      const data = await getSlots({ floor: floorNum });
+      // Map floor names to numbers: Basement -> 0, Floor X -> X
+      const floorNum = flr === 'Basement' ? 0 : (flr.replace(/\D/g, '') || 1);
+      const data = await getSlots({ floor: floorNum, location: loc });
 
       const formattedSlots = (data.slots || []).map(s => ({
         id: s._id || s.slot_id || s.slotId,

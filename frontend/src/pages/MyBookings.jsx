@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import StatsCard from '../Components/StatsCard';
 import { FaBookmark, FaCheckCircle, FaClock, FaCalendarAlt, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getBookings, cancelBooking } from '../services/api';
+import StatsCard from '../Components/StatsCard';
+import { getBookings, cancelBooking, exitParking } from '../services/api';
 
 const statusCfg = {
-  active: { cls: 'status-active', dot: 'bg-emerald-500', label: 'Active' },
+  active: { cls: 'status-active', dot: 'bg-emerald-500', label: 'In Parking' },
   completed: { cls: 'status-completed', dot: 'bg-blue-500', label: 'Completed' },
   cancelled: { cls: 'status-cancelled', dot: 'bg-red-400', label: 'Cancelled' },
 };
@@ -27,7 +27,7 @@ const MyBookings = () => {
         setLoading(true);
         setError('');
         const data = await getBookings();
-        // API returns { bookings: [...] }
+        // API returns {bookings: [...] }
         const apiBookings = data.bookings || [];
         setBookings(apiBookings);
       } catch (err) {

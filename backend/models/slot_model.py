@@ -6,13 +6,14 @@ from database import get_db
 from utils.helpers import serialize_doc, serialize_many
 
 
-def create_slot(slot_id: str, floor: int, status: str = "available") -> dict:
+def create_slot(slot_id: str, floor: int, status: str = "available", location: str = "CityMall") -> dict:
     """Insert a new parking slot."""
     db = get_db()
     slot = {
         "slotId": slot_id,
         "floor": floor,
         "status": status,
+        "location": location,
     }
     result = db.slots.insert_one(slot)
     slot["_id"] = result.inserted_id
@@ -24,9 +25,14 @@ def get_all_slots(filters: dict | None = None) -> list:
     query = {}
     if filters:
         if "floor" in filters:
-            query["floor"] = int(filters["floor"])
+            try:
+                query["floor"] = int(filters["floor"])
+            except (ValueError, TypeError):
+                pass
         if "status" in filters:
             query["status"] = filters["status"]
+        if "location" in filters:
+            query["location"] = filters["location"]
     return serialize_many(get_db().slots.find(query).sort("slotId", 1))
 
 

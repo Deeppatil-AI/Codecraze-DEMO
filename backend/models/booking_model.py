@@ -1,24 +1,29 @@
 """
 Booking model — CRUD operations for the `bookings` collection.
 """
+from datetime import datetime
 from bson import ObjectId
 from database import get_db
 from utils.helpers import utcnow, serialize_doc, serialize_many
 
 
-def create_booking(user_id: str, vehicle_id: str, slot_id: str, amount: float | None = None) -> dict:
-    """Insert a new booking with entryTime set to now."""
+def create_booking(user_id: str, vehicle_id: str, slot_id: str, duration: float, expected_exit_time: datetime, amount: float | None = None) -> dict:
+    """Insert a new booking with entryTime set to now and expectedExitTime."""
     db = get_db()
     booking = {
         "userId": user_id,
         "vehicleId": vehicle_id,
         "slotId": slot_id,
+        "duration": duration,
         "entryTime": utcnow(),
+        "expectedExitTime": expected_exit_time,
         "exitTime": None,
         "status": "active",
+        "overtimeAmount": 0.0,
     }
     if amount is not None:
         booking["amount"] = float(amount)
+        booking["totalAmount"] = float(amount) # Base total
     result = db.bookings.insert_one(booking)
     booking["_id"] = result.inserted_id
     return serialize_doc(booking)

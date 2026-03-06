@@ -12,12 +12,14 @@ slot_bp = Blueprint("slots", __name__, url_prefix="/api/slots")
 
 @slot_bp.route("", methods=["GET"])
 def get_all():
-    """GET /api/slots?floor=1&status=available"""
+    """GET /api/slots?floor=1&status=available&location=CityMall"""
     filters = {}
     if request.args.get("floor"):
         filters["floor"] = request.args["floor"]
     if request.args.get("status"):
         filters["status"] = request.args["status"]
+    if request.args.get("location"):
+        filters["location"] = request.args["location"]
     slots = list_slots(filters if filters else None)
     return jsonify({"slots": slots}), 200
 

@@ -32,10 +32,41 @@ def create_booking():
     vehicle_id = data.get("vehicleId", "")
     vehicle_number = data.get("vehicleNumber", "")
     slot_id = data.get("slotId", "")
+    duration = float(data.get("duration", 0))
+    date_str = data.get("date", "")
+    time_str = data.get("time", "")
     amount = data.get("amount")
 
     if not slot_id or (not vehicle_id and not vehicle_number):
         return jsonify({"message": "slotId and either vehicleId or vehicleNumber are required"}), 400
+
+    if not duration or not date_str or not time_str:
+        return jsonify({"message": "duration, date, and time are required"}), 400
+
+    # Parse and validate start time
+    try:
+        from datetime import datetime, timedelta, timezone
+        from utils.helpers import utcnow
+        
+        # Parse local time 
+        start_time = datetime.fromisoformat(f"{date_str}T{time_str}")
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+        
+        now = utcnow()
+        
+        # 1. Must be at least 1 hour in the future
+        min_lead = now + timedelta(hours=1)
+        if start_time < min_lead:
+            return jsonify({"message": "Bookings must be made at least 1 hour in advance"}), 400
+            
+        # 2. Must be within 3 days
+        max_horizon = now + timedelta(days=3)
+        if start_time > max_horizon:
+            return jsonify({"message": "Bookings can only be made up to 3 days in advance"}), 400
+
+    except Exception as e:
+        return jsonify({"message": f"Invalid date/time format: {str(e)}"}), 400
 
     # Auto-resolve vehicleNumber to vehicleId
     if not vehicle_id and vehicle_number:
@@ -56,7 +87,7 @@ def create_booking():
             except DuplicateKeyError:
                 pass # Unlikely, but fallback if needed
 
-    booking, error = book_slot(g.user_id, vehicle_id, slot_id, amount=amount)
+    booking, error = book_slot(g.user_id, vehicle_id, slot_id, duration, start_time=start_time, amount=amount)
     if error:
         return jsonify({"message": error}), 400
     return jsonify({"message": "Slot booked successfully", "booking": booking}), 201

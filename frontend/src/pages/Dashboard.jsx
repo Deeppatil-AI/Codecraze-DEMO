@@ -5,17 +5,17 @@ import {
   FaCalendarAlt, FaMapMarkerAlt, FaBan, FaLock,
   FaChartBar, FaUser, FaCarAlt, FaTrophy, FaArrowUp, FaArrowDown, FaSync,
 } from 'react-icons/fa';
-import { getBookings } from '../services/api';
+import { getBookings, exitParking } from '../services/api';
 
 /* ── helpers ──────────────────────────────────────────────────── */
-const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const statusCfg = {
-  active:    { cls: 'status-active',    dot: 'bg-emerald-500', label: 'Active',     icon: '🟢' },
-  confirmed: { cls: 'status-active',    dot: 'bg-emerald-500', label: 'Confirmed',  icon: '🟢' },
-  paid:      { cls: 'status-completed', dot: 'bg-blue-500',    label: 'Paid',       icon: '🔵' },
-  completed: { cls: 'status-completed', dot: 'bg-blue-500',    label: 'Completed',  icon: '🔵' },
-  cancelled: { cls: 'status-cancelled', dot: 'bg-red-400',     label: 'Cancelled',  icon: '🔴' },
+  active: { cls: 'status-active', dot: 'bg-emerald-500', label: 'In Parking', icon: '🟢' },
+  confirmed: { cls: 'status-active', dot: 'bg-emerald-500', label: 'Confirmed', icon: '🟢' },
+  paid: { cls: 'status-completed', dot: 'bg-blue-500', label: 'Paid', icon: '🔵' },
+  completed: { cls: 'status-completed', dot: 'bg-blue-500', label: 'Completed', icon: '🔵' },
+  cancelled: { cls: 'status-cancelled', dot: 'bg-red-400', label: 'Cancelled', icon: '🔴' },
 };
 
 /* ── tiny bar chart ───────────────────────────────────────────── */
@@ -74,17 +74,17 @@ const DonutChart = ({ completed, active, cancelled }) => {
 
 /* ═══════════════════════════════════════════════════════════════ */
 const Dashboard = () => {
-  const [user, setUser]         = useState(null);
+  const [user, setUser] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [tab, setTab]           = useState('all');
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState('all');
 
   const fetchBookings = (parsed) => {
     if (!parsed) return;
     setLoading(true);
     const params = {};
-    if (parsed._id || parsed.id) params.user_id    = parsed._id || parsed.id;
-    if (parsed.email)            params.user_email = parsed.email;
+    if (parsed._id || parsed.id) params.user_id = parsed._id || parsed.id;
+    if (parsed.email) params.user_email = parsed.email;
     getBookings(params)
       .then((res) => {
         const all = res.bookings || res || [];
@@ -92,6 +92,19 @@ const Dashboard = () => {
       })
       .catch(() => setBookings([]))
       .finally(() => setLoading(false));
+  };
+
+  const handleExit = async (bookingId) => {
+    if (!window.confirm('Are you taking your vehicle now? Final charges will be calculated.')) return;
+    try {
+      setLoading(true);
+      await exitParking(bookingId);
+      if (user) fetchBookings(user);
+    } catch (err) {
+      alert(err.message || 'Failed to process exit.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -103,14 +116,22 @@ const Dashboard = () => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Custom event listener for refreshing when needed
+  useEffect(() => {
+    const refresher = () => user && fetchBookings(user);
+    window.addEventListener('refreshBookings', refresher);
+    return () => window.removeEventListener('refreshBookings', refresher);
+  }, [user]);
+
+
   /* ── derived stats ── */
   const totalBookings = bookings.length;
-  const activeCount   = bookings.filter(b => ['active','confirmed'].includes(b.status)).length;
-  const completedCount= bookings.filter(b => ['completed','paid'].includes(b.status)).length;
-  const cancelledCount= bookings.filter(b => b.status === 'cancelled').length;
-  const totalSpent    = bookings.reduce((s, b) => s + (b.total || b.amount || 0), 0);
-  const avgSpend      = totalBookings ? Math.round(totalSpent / totalBookings) : 0;
-  const favLocation   = (() => {
+  const activeCount = bookings.filter(b => ['active', 'confirmed'].includes(b.status)).length;
+  const completedCount = bookings.filter(b => ['completed', 'paid'].includes(b.status)).length;
+  const cancelledCount = bookings.filter(b => b.status === 'cancelled').length;
+  const totalSpent = bookings.reduce((s, b) => s + (b.total || b.amount || 0), 0);
+  const avgSpend = totalBookings ? Math.round(totalSpent / totalBookings) : 0;
+  const favLocation = (() => {
     const freq = {};
     bookings.forEach(b => { if (b.location) freq[b.location] = (freq[b.location] || 0) + 1; });
     return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
@@ -134,11 +155,11 @@ const Dashboard = () => {
   const filtered = tab === 'all'
     ? bookings
     : bookings.filter(b => {
-        if (tab === 'active')    return ['active','confirmed'].includes(b.status);
-        if (tab === 'completed') return ['completed','paid'].includes(b.status);
-        if (tab === 'cancelled') return b.status === 'cancelled';
-        return true;
-      });
+      if (tab === 'active') return ['active', 'confirmed'].includes(b.status);
+      if (tab === 'completed') return ['completed', 'paid'].includes(b.status);
+      if (tab === 'cancelled') return b.status === 'cancelled';
+      return true;
+    });
 
   /* ── not logged in ── */
   if (!user) {
@@ -287,7 +308,7 @@ const Dashboard = () => {
             <div className="w-full space-y-2">
               {[
                 { label: 'Completed', count: completedCount, color: 'bg-blue-500' },
-                { label: 'Active',    count: activeCount,    color: 'bg-emerald-500' },
+                { label: 'Active', count: activeCount, color: 'bg-emerald-500' },
                 { label: 'Cancelled', count: cancelledCount, color: 'bg-red-400' },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between text-[12px]">
@@ -340,19 +361,18 @@ const Dashboard = () => {
             {/* Tabs */}
             <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
               {[
-                { key: 'all',       label: 'All' },
-                { key: 'active',    label: '🟢 Active' },
+                { key: 'all', label: 'All' },
+                { key: 'active', label: '🟢 Active' },
                 { key: 'completed', label: '🔵 Completed' },
                 { key: 'cancelled', label: '🔴 Cancelled' },
               ].map(t => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 ${
-                    tab === t.key
-                      ? 'bg-white text-violet-700 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 ${tab === t.key
+                    ? 'bg-white text-violet-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
+                    }`}
                 >
                   {t.label}
                 </button>
@@ -417,8 +437,26 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[22px] font-extrabold gradient-text tracking-tight leading-none">₹{b.total || b.amount}</p>
-                        <p className="text-[10px] text-gray-400 font-mono mt-1">#{(b._id || b.id || '').slice(-6)}</p>
+                        <p className="text-[22px] font-extrabold gradient-text tracking-tight leading-none">
+                          ₹{b.totalAmount || b.total || b.amount}
+                        </p>
+                        {b.overtimeAmount > 0 && (
+                          <p className="text-[10px] text-red-500 font-bold mt-1">
+                            + ₹{b.overtimeAmount} Overtime
+                          </p>
+                        )}
+                        <p className="text-[10px] text-gray-400 font-mono mt-1">
+                          #{(b._id || b.id || '').slice(-6)}
+                        </p>
+
+                        {b.status === 'active' && (
+                          <button
+                            onClick={() => handleExit(b._id)}
+                            className="mt-3 block w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all"
+                          >
+                            Exit Parking
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

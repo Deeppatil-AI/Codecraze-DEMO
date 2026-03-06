@@ -53,9 +53,16 @@ const BookSlot = () => {
     slotId: '',
   });
 
+  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const minDate = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+  const maxDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // 3 days from now
+
+  const minDateStr = minDate.toISOString().split('T')[0];
+  const maxDateStr = maxDate.toISOString().split('T')[0];
+
   const totalAmount = form.duration ? parseFloat(form.duration) * (preselected?.price || RATE_PER_HOUR) : 0;
 
   /* ── Check for pre-selected slot on mount ── */
@@ -80,6 +87,7 @@ const BookSlot = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setError(''); // Clear error on change
   };
 
   const clearPreselected = () => {
@@ -91,13 +99,32 @@ const BookSlot = () => {
   /* ── submit booking ── */
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validate lead time
+    const selectedDateTime = new Date(`${form.date}T${form.time}`);
+    const nowTime = new Date();
+    const oneHourLater = new Date(nowTime.getTime() + 60 * 60 * 1000);
+
+    if (selectedDateTime < oneHourLater) {
+      setError('Bookings must be made at least 1 hour in advance.');
+      return;
+    }
+
+    const threeDaysLater = new Date(nowTime.getTime() + 3 * 24 * 60 * 60 * 1000);
+    if (selectedDateTime > threeDaysLater) {
+      setError('Bookings can only be made up to 3 days in advance.');
+      return;
+    }
+
     setSubmitting(true);
 
     // Construct the booking info to pass to the payment page
+    const floorNum = form.floor === 'Basement' ? 0 : (form.floor.replace(/\D/g, '') || 1);
     const bookingInfo = {
       ...form,
+      floor: floorNum, // Use numeric floor for backend consistency
       totalAmount,
-      // Ensure we have the latest slot info from preselected if available
+      amount: totalAmount, // For backend
       slotId: preselected?.slotId || form.slotId,
       vehicleNumber: form.vehicleNumber,
     };
@@ -162,6 +189,13 @@ const BookSlot = () => {
 
           <div className="p-8 space-y-5">
 
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-[13px] font-medium animate-shake">
+                ⚠️ {error}
+              </div>
+            )}
+
             {/* ─ Section: Personal Info ─ */}
             <div>
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
@@ -212,7 +246,7 @@ const BookSlot = () => {
                     <FaCalendarAlt className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-500 text-[13px]" />
                     <input
                       type="date" name="date" value={form.date} onChange={handleChange}
-                      min={today} required
+                      min={minDateStr} max={maxDateStr} required
                       className="input-field input-field-icon cursor-pointer" id="booking-date-input"
                     />
                   </div>

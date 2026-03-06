@@ -106,6 +106,8 @@ export const getBookingById = (id) => API.get(`/bookings/${id}`);
 
 export const cancelBooking = (id) => API.delete(`/bookings/${id}`);
 
+export const exitParking = (id) => API.put(`/exit/${id}`);
+
 // Admin booking operations
 export const getAllBookingsAdmin = () => AdminAPI.get('/bookings/all');
 export const completeBooking = (id) => AdminAPI.put(`/exit/${id}`);

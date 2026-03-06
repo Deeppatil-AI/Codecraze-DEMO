@@ -24,18 +24,38 @@ def seed():
     print("🗑️  Cleared floors and slots collections.")
 
     # ── Seed floors & slots ───────────────────────────────────────────────────
-    floors_config = [
-        {"floorNumber": 1, "totalSlots": 10},
-        {"floorNumber": 2, "totalSlots": 10},
-        {"floorNumber": 3, "totalSlots": 10},
+    locations = [
+        'CityMall',
+        'Downtown Parking Hub',
+        'Airport Terminal A',
+        'Airport Terminal B',
+        'Mall Central Parking',
+        'Tech Park Zone 1',
+        'Railway Station Lot',
     ]
 
+    floors_config = [
+        {"floorNumber": 0, "totalSlots": 5, "name": "Basement"},
+        {"floorNumber": 1, "totalSlots": 10, "name": "Floor 1"},
+        {"floorNumber": 2, "totalSlots": 10, "name": "Floor 2"},
+        {"floorNumber": 3, "totalSlots": 10, "name": "Floor 3"},
+        {"floorNumber": 4, "totalSlots": 5, "name": "Floor 4"},
+    ]
+
+    # ── Seed floors ───────────────────────────────────────────────────
     for fc in floors_config:
         create_floor(fc["floorNumber"], fc["totalSlots"])
-        for s in range(1, fc["totalSlots"] + 1):
-            slot_id = f"F{fc['floorNumber']}-S{s:02d}"
-            create_slot(slot_id, fc["floorNumber"])
-        print(f"   ✅ Floor {fc['floorNumber']}  →  {fc['totalSlots']} slots created")
+        print(f"   ✅ Floor {fc['floorNumber']} globally created")
+
+    for idx, loc in enumerate(locations):
+        print(f"📍 Seeding slots for {loc}...")
+        for fc in floors_config:
+            for s in range(1, fc["totalSlots"] + 1):
+                floor_prefix = "B" if fc["floorNumber"] == 0 else f"F{fc['floorNumber']}"
+                # Add location index to ensure uniqueness even if names start with same 3 letters
+                slot_id = f"L{idx}-{floor_prefix}-S{s:02d}"
+                create_slot(slot_id, fc["floorNumber"], location=loc)
+            print(f"   ✅ {fc['name']}  →  {fc['totalSlots']} slots seeded")
 
     # ── Seed admin user ───────────────────────────────────────────────────────
     admin_email = "admin@parkeasy.com"
