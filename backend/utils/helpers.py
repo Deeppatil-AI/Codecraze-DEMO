@@ -89,12 +89,12 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     try:
         if port == 465:
             # Direct SSL connection (Gmail App Password on port 465)
-            with smtplib.SMTP_SSL(host, port) as server:
+            with smtplib.SMTP_SSL(host, port, timeout=10) as server:
                 server.login(username, password)
                 server.send_message(msg)
         else:
             # STARTTLS (Gmail App Password on port 587)
-            with smtplib.SMTP(host, port) as server:
+            with smtplib.SMTP(host, port, timeout=10) as server:
                 server.ehlo()
                 server.starttls()
                 server.ehlo()

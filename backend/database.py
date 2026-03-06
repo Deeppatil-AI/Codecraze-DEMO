@@ -13,7 +13,8 @@ def get_db():
     """Return the MongoDB database instance, creating the client on first call."""
     global _client, _db
     if _db is None:
-        _client = MongoClient(Config.MONGO_URI)
+        print(f"Connecting to MongoDB at: {Config.MONGO_URI.split('@')[-1]}") # Log host safely
+        _client = MongoClient(Config.MONGO_URI, serverSelectionTimeoutMS=5000)
         _db = _client[Config.MONGO_DB_NAME]
         _ensure_indexes(_db)
     return _db

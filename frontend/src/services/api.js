@@ -9,7 +9,7 @@ const API = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 // Request interceptor – attach customer auth token if available
@@ -31,7 +31,7 @@ const AdminAPI = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 AdminAPI.interceptors.request.use(
