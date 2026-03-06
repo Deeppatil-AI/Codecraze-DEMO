@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FaUsers, FaBookmark, FaCheckCircle, FaRupeeSign, FaClock, FaTimesCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaUsers, FaBookmark, FaCheckCircle, FaRupeeSign, FaClock, FaTimesCircle, FaSignOutAlt } from 'react-icons/fa';
 import { getAdminSummary, getAllBookingsAdmin, completeBooking, getAdminPayments } from '../services/api';
 
 const StatCard = ({ icon, label, value, color }) => (
@@ -18,6 +19,7 @@ const StatCard = ({ icon, label, value, color }) => (
 );
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,12 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('parkmate_admin_token');
+    localStorage.removeItem('parkmate_admin_user');
+    navigate('/admin/login');
+  };
+
   // Build a tiny 7-day revenue series from payments
   const revenueByDay = (() => {
     const days = [];
@@ -96,6 +104,13 @@ const AdminDashboard = () => {
               powerful dashboard.
             </p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 text-white font-bold text-[14px] hover:bg-red-600 transition shadow-lg hover:shadow-red-500/30"
+          >
+            <FaSignOutAlt />
+            Logout
+          </button>
         </div>
 
         {error && (
@@ -211,13 +226,12 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                              b.status === 'completed'
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${b.status === 'completed'
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : b.status === 'cancelled'
                                   ? 'bg-red-50 text-red-600'
                                   : 'bg-blue-50 text-blue-600'
-                            }`}
+                              }`}
                           >
                             {b.status === 'completed' ? (
                               <FaCheckCircle className="text-[10px]" />

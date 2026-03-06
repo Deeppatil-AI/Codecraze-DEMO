@@ -116,7 +116,7 @@ const Signup = () => {
 
         <div className="relative z-10">
           <h2 className="text-[36px] font-extrabold text-white leading-tight tracking-tight mb-4">
-            Park smarter,<br />
+            Park easier,<br />
             <span style={{
               background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
               WebkitBackgroundClip: 'text',
@@ -165,7 +165,7 @@ const Signup = () => {
               <div className="mb-7">
                 <h1 className="text-[22px] font-extrabold text-gray-900 tracking-tight">Create your account</h1>
                 <p className="text-[13px] text-gray-400 mt-1">
-                  {step === STEPS.FORM && 'Start parking smarter in under 2 minutes.'}
+                  {step === STEPS.FORM && 'Start parking in under 2 minutes.'}
                   {step === STEPS.OTP && `We’ve sent a 6‑digit code to ${form.email}. Enter it to verify your account.`}
                 </p>
               </div>

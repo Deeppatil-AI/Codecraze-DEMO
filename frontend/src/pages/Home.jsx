@@ -77,7 +77,7 @@ const Home = () => (
 
           <p className="text-white/60 text-[12px] font-semibold tracking-[0.1em] uppercase mb-3">Get Started Today</p>
           <h2 className="text-[28px] sm:text-[36px] font-extrabold text-white tracking-tight leading-tight mb-3 relative">
-            Ready to park smarter?
+            Ready to park easier?
           </h2>
           <p className="text-white/60 max-w-sm mx-auto text-[14px] mb-8 relative">
             Join 50,000+ drivers who trust ParkMate for stress-free parking every day.
@@ -107,9 +107,9 @@ const Home = () => (
           <div className="w-7 h-7 rounded-lg icon-purple flex items-center justify-center text-xs">🚗</div>
           <span className="font-bold gradient-text text-[15px]">ParkMate</span>
           <span className="text-gray-200 text-sm mx-1">|</span>
-          <span className="text-[12px] text-gray-400">Smart Parking Made Easy</span>
+          <span className="text-[12px] text-gray-400">Parking Made Easy</span>
         </div>
-        <p className="text-gray-400 text-[12px]">© 2026 ParkMate · Made with ❤️ for smarter cities</p>
+        <p className="text-gray-400 text-[12px]">© 2026 ParkMate · Made with ❤️ for modern cities</p>
       </div>
     </footer>
   </div>

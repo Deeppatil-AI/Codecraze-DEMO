@@ -52,7 +52,7 @@ const Hero = () => (
 
         {/* Heading */}
         <h1 className="text-[52px] sm:text-[68px] lg:text-[80px] font-extrabold text-white leading-[1.05] tracking-[-0.03em] mb-6 animate-fade-up delay-1">
-          Smart Parking<br />
+          Parking<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-200 to-blue-300">
             Made Easy
           </span>
@@ -120,7 +120,7 @@ const Hero = () => (
         <div className="text-center mb-12">
           {/* <span className="badge mb-4">✦ Why ParkMate</span> */}
           <h2 className="text-[32px] sm:text-[40px] font-extrabold text-gray-900 tracking-tight leading-tight mt-3">
-            Everything you need for <span className="gradient-text">smart parking</span>
+            Everything you need for <span className="gradient-text">parking</span>
           </h2>
           <p className="text-gray-500 text-[15px] mt-3 max-w-md mx-auto">
             Designed for modern drivers — fast, reliable, beautifully simple.
