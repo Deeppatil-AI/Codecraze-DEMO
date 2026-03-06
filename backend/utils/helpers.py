@@ -86,21 +86,17 @@ def send_email(to_email: str, subject: str, body: str) -> None:
     msg["To"] = to_email
     msg.set_content(body)
 
-    try:
-        if port == 465:
-            # Direct SSL connection (Gmail App Password on port 465)
-            with smtplib.SMTP_SSL(host, port, timeout=10) as server:
-                server.login(username, password)
-                server.send_message(msg)
-        else:
-            # STARTTLS (Gmail App Password on port 587)
-            with smtplib.SMTP(host, port, timeout=10) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(username, password)
-                server.send_message(msg)
-        print(f"[EMAIL] OTP sent successfully to {to_email}")
-    except Exception as exc:
-        print(f"[EMAIL ERROR] Failed to send email to {to_email}: {exc}")
+    # Direct SSL connection (port 465) or STARTTLS (port 587)
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=10) as server:
+            server.login(username, password)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(username, password)
+            server.send_message(msg)
+    print(f"[EMAIL] OTP sent successfully to {to_email}")
 

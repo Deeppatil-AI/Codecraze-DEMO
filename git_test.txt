@@ -1,0 +1,2 @@
+# Debugging git status
+This is a test file to see if git is tracking changes.
