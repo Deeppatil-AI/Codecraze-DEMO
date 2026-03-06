@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash,
-  FaCheckCircle, FaCar, FaArrowLeft
+  FaCheckCircle, FaArrowLeft
 } from 'react-icons/fa';
-import { requestSignupOtp, verifySignupOtp, registerUser } from '../services/api';
+import { requestSignupOtp, verifySignupOtp } from '../services/api';
 
 const perks = [
   { icon: '🚗', text: 'Book parking slots in seconds' },
@@ -76,43 +76,25 @@ const Signup = () => {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const otpValue = otp.join('');
-    if (otpValue.length < 6) {
-      setError('Please enter the 6-digit OTP.');
+    if (otp.trim().length < 6) {
+      setError('Please enter the 6-digit code sent to your email.');
       return;
     }
     setLoading(true);
     try {
-      const res = await registerUser({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        otp: otpValue
-      });
-      // Store user object
-      const newUser = { email: form.email, name: form.name, role: 'user', ...(res.user || {}) };
-      localStorage.setItem('parkmate_user', JSON.stringify(newUser));
+      const data = await verifySignupOtp({ email: form.email, otp: otp.trim() });
+      if (!data?.token || !data?.user) {
+        throw new Error('Unexpected server response. Please try again.');
+      }
+      localStorage.setItem('parkmate_user', JSON.stringify(data.user));
+      localStorage.setItem('parkmate_token', data.token);
       window.dispatchEvent(new CustomEvent('userLoggedIn'));
       setSuccess(true);
       setTimeout(() => navigate('/dashboard'), 1400);
     } catch (err) {
-      setError(err.message || 'Verification failed.');
+      setError(err.message || 'Invalid or expired code. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-    if (value && index < 5) otpRefs.current[index + 1].focus();
-  };
-
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpRefs.current[index - 1].focus();
     }
   };
 
@@ -125,7 +107,6 @@ const Signup = () => {
           background: 'linear-gradient(150deg, #0d0a28 0%, #1a1050 50%, #0b1630 100%)',
         }}
       >
-        {/* Glow blobs */}
         <div className="absolute top-0 left-0 w-80 h-80 rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)' }} />
         <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full pointer-events-none"
@@ -168,14 +149,13 @@ const Signup = () => {
       {/* ── Right Panel ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-8 bg-[#f4f3fb] overflow-y-auto">
         <div className="w-full max-w-[420px] my-auto">
-
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #7c3aed, #4f46e5, #2563eb)' }} />
 
             <div className="p-8">
               {step === STEPS.OTP && !success && (
                 <button
-                  onClick={() => setStep(STEPS.INFO)}
+                  onClick={() => setStep(STEPS.FORM)}
                   className="flex items-center gap-2 text-violet-600 font-semibold text-[12px] mb-6 hover:text-violet-800 transition"
                 >
                   <FaArrowLeft /> Back
@@ -205,7 +185,6 @@ const Signup = () => {
 
                   {step === STEPS.FORM && (
                     <form onSubmit={handleInfoSubmit} className="space-y-4">
-                      {/* Full Name */}
                       <div>
                         <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Full Name</label>
                         <div className="relative">
@@ -218,7 +197,6 @@ const Signup = () => {
                         </div>
                       </div>
 
-                      {/* Email */}
                       <div>
                         <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Email</label>
                         <div className="relative">
@@ -231,7 +209,6 @@ const Signup = () => {
                         </div>
                       </div>
 
-                      {/* Password */}
                       <div>
                         <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Password</label>
                         <div className="relative">
@@ -250,7 +227,6 @@ const Signup = () => {
                           </button>
                         </div>
 
-                        {/* Strength meter */}
                         {form.password && (
                           <div className="mt-2">
                             <div className="flex gap-1 mb-1">
@@ -269,7 +245,6 @@ const Signup = () => {
                         )}
                       </div>
 
-                      {/* Confirm Password */}
                       <div>
                         <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">Confirm Password</label>
                         <div className="relative">
@@ -297,43 +272,13 @@ const Signup = () => {
                         id="signup-submit"
                         className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-1"
                       >
-                        {loading ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Creating account…
-                          </>
-                        ) : 'Create Account →'}
+                        {loading ? 'Creating account…' : 'Create Account →'}
                       </button>
                     </form>
                   )}
 
                   {step === STEPS.OTP && (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        setError('');
-                        if (otp.trim().length < 6) {
-                          setError('Please enter the 6-digit code sent to your email.');
-                          return;
-                        }
-                        setLoading(true);
-                        try {
-                          const data = await verifySignupOtp({ email: form.email, otp: otp.trim() });
-                          if (!data?.token || !data?.user) {
-                            throw new Error('Unexpected server response. Please try again.');
-                          }
-                          localStorage.setItem('parkmate_user', JSON.stringify(data.user));
-                          localStorage.setItem('parkmate_token', data.token);
-                          setSuccess(true);
-                          setTimeout(() => navigate('/'), 1400);
-                        } catch (err) {
-                          setError(err.message || 'Invalid or expired code. Please try again.');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="space-y-4"
-                    >
+                    <form onSubmit={handleOtpSubmit} className="space-y-4">
                       <div>
                         <label className="block text-[12px] font-semibold text-gray-600 mb-1.5">
                           Enter 6-digit verification code
@@ -353,12 +298,7 @@ const Signup = () => {
                         disabled={loading}
                         className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed mt-1"
                       >
-                        {loading ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Verifying…
-                          </>
-                        ) : 'Verify & Create Account →'}
+                        {loading ? 'Verifying…' : 'Verify & Create Account →'}
                       </button>
                     </form>
                   )}
