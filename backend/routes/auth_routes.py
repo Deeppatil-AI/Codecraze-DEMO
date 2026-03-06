@@ -73,7 +73,7 @@ def register_request_otp():
         )
 
     # Send professional HTML email (or log to console in dev/fallback)
-    email_svc.send_otp_email(
+    email_svc.send_otp_email_async(
         recipient=email,
         otp=otp,
         recipient_name=name or 'there'
@@ -194,7 +194,7 @@ def forgot_request_otp():
                 }
             },
         )
-        email_svc.send_otp_email(
+        email_svc.send_otp_email_async(
             recipient=email,
             otp=otp,
             recipient_name=doc.get('name', 'there')

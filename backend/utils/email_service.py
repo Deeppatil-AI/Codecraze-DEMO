@@ -1,6 +1,7 @@
 import os
 import smtplib
 import socket
+import threading
 from email.message import EmailMessage
 from email.utils import formatdate
 import logging
@@ -27,7 +28,7 @@ class EmailService:
         self.username = os.getenv("SMTP_USERNAME")
         self.password = os.getenv("SMTP_PASSWORD")
         self.sender = os.getenv("EMAIL_FROM", self.username or "no-reply@parkmate.com")
-        self.max_retries = 3
+        self.max_retries = 2
         
         # Determine operational mode
         self.developer_mode = self._is_developer_mode()
@@ -141,6 +142,18 @@ class EmailService:
         </html>
         """
 
+    def send_otp_email_async(self, recipient: str, otp: str, recipient_name: str = "User") -> None:
+        """
+        Spawns a background thread to send the email, preventing API request timeouts.
+        This ensures the frontend receives an immediate response.
+        """
+        thread = threading.Thread(
+            target=self.send_otp_email, 
+            args=(recipient, otp, recipient_name),
+            daemon=True
+        )
+        thread.start()
+
     def send_otp_email(self, recipient: str, otp: str, recipient_name: str = "User") -> bool:
         """
         Sends the OTP email to the specified recipient.
@@ -181,7 +194,7 @@ class EmailService:
                 logger.info(f"Attempting SMTP TLS connection to {self.host}:{self.port} (Attempt {attempt}/{self.max_retries})")
                 
                 # Enforce timeout to prevent hanging the main Flask thread
-                with smtplib.SMTP(self.host, self.port, timeout=10) as server:
+                with smtplib.SMTP(self.host, self.port, timeout=5) as server:
                     server.set_debuglevel(0) # Keep logs clean in production
                     server.ehlo()
                     server.starttls()
