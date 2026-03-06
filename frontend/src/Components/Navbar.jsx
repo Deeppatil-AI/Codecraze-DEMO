@@ -100,6 +100,14 @@ const Navbar = ({ onLoginClick }) => {
 
           {/* Right */}
           <div className="hidden md:flex items-center gap-3">
+            {!isAdminRoute && (
+              <Link
+                to="/admin/login"
+                className="text-[13px] font-semibold text-gray-500 hover:text-violet-600 transition"
+              >
+                Admin
+              </Link>
+            )}
 
             {isAdminRoute ? (
               adminUser && (
@@ -162,6 +170,15 @@ const Navbar = ({ onLoginClick }) => {
                 </NavLink>
               ))}
             <div className="pt-2 pb-1 space-y-2">
+              {!isAdminRoute && (
+                <Link
+                  to="/admin/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-center text-[13px] font-semibold text-gray-500 hover:text-violet-600 mb-2"
+                >
+                  Admin
+                </Link>
+              )}
 
               {isAdminRoute ? (
                 adminUser ? (
