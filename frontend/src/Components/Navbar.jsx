@@ -62,8 +62,8 @@ const Navbar = ({ onLoginClick }) => {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? 'bg-white/98 backdrop-blur-xl border-b border-gray-200/80 shadow-sm'
-          : 'bg-white/90 backdrop-blur-md border-b border-transparent'
+        ? 'bg-white/98 backdrop-blur-xl border-b border-gray-200/80 shadow-sm'
+        : 'bg-white/90 backdrop-blur-md border-b border-transparent'
         }`}
     >
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
@@ -86,10 +86,9 @@ const Navbar = ({ onLoginClick }) => {
                   to={link.to}
                   end={link.to === '/'}
                   className={({ isActive }) =>
-                    `px-3.5 py-1.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 ${
-                      isActive
-                        ? 'text-violet-700 bg-violet-50'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80'
+                    `px-3.5 py-1.5 rounded-lg text-[13.5px] font-medium transition-all duration-150 ${isActive
+                      ? 'text-violet-700 bg-violet-50'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80'
                     }`
                   }
                 >
@@ -101,17 +100,6 @@ const Navbar = ({ onLoginClick }) => {
 
           {/* Right */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Admin entry only on non-admin routes */}
-            {!isAdminRoute && (
-              <Link
-                to="/admin/login"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[12px] font-semibold text-gray-400 hover:text-violet-600 transition"
-              >
-                Admin
-              </Link>
-            )}
 
             {isAdminRoute ? (
               adminUser && (
@@ -152,73 +140,61 @@ const Navbar = ({ onLoginClick }) => {
         </div>
       </div>
 
-          {/* Mobile Menu */}
-          {menuOpen && (
-            <div className="md:hidden bg-white border-t border-gray-100 animate-fade-up">
-              <div className="px-5 py-3 space-y-0.5">
-                {!isAdminRoute && user?.role !== 'admin' &&
-                  navLinks.map((link) => (
-                    <NavLink
-                      key={link.to}
-                      to={link.to}
-                      end={link.to === '/'}
-                      onClick={() => setMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                          isActive
-                            ? 'text-violet-700 bg-violet-50'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                        }`
-                      }
-                    >
-                      {link.label}
-                    </NavLink>
-                  ))}
-                <div className="pt-2 pb-1 space-y-2">
-                  {!isAdminRoute && (
-                    <Link
-                      to="/admin/login"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setMenuOpen(false)}
-                      className="block w-full text-center text-[12px] font-semibold text-gray-400 hover:text-violet-600"
-                    >
-                      Admin
-                    </Link>
-                  )}
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 animate-fade-up">
+          <div className="px-5 py-3 space-y-0.5">
+            {!isAdminRoute && user?.role !== 'admin' &&
+              navLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.to === '/'}
+                  onClick={() => setMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `block px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
+                      ? 'text-violet-700 bg-violet-50'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            <div className="pt-2 pb-1 space-y-2">
 
-                  {isAdminRoute ? (
-                    adminUser ? (
-                      <div className="px-3.5 py-2 text-sm text-gray-700 font-medium text-center">
-                        ParkMate <span className="text-violet-600 font-semibold">Admin Panel</span>
-                      </div>
-                    ) : (
-                      null
-                    )
-                  ) : user ? (
-                    <>
-                      <div className="px-3.5 py-2 text-sm text-gray-700 font-medium">
-                        Logged in as {user.name}
-                      </div>
-                      <button
-                        onClick={() => { handleLogout(); setMenuOpen(false); }}
-                        className="w-full btn-primary !bg-red-500 hover:!bg-red-600 py-2.5 mt-2"
-                      >
-                        Logout
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => { onLoginClick(); setMenuOpen(false); }}
-                      className="w-full btn-primary py-2.5"
-                    >
-                      Login
-                    </button>
-                  )}
-                </div>
-              </div>
+              {isAdminRoute ? (
+                adminUser ? (
+                  <div className="px-3.5 py-2 text-sm text-gray-700 font-medium text-center">
+                    ParkMate <span className="text-violet-600 font-semibold">Admin Panel</span>
+                  </div>
+                ) : (
+                  null
+                )
+              ) : user ? (
+                <>
+                  <div className="px-3.5 py-2 text-sm text-gray-700 font-medium">
+                    Logged in as {user.name}
+                  </div>
+                  <button
+                    onClick={() => { handleLogout(); setMenuOpen(false); }}
+                    className="w-full btn-primary !bg-red-500 hover:!bg-red-600 py-2.5 mt-2"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { onLoginClick(); setMenuOpen(false); }}
+                  className="w-full btn-primary py-2.5"
+                >
+                  Login
+                </button>
+              )}
             </div>
-          )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
