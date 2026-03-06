@@ -25,6 +25,10 @@ class Config:
             "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173,https://codecraze-demo.vercel.app,https://codecraze-demo.onrender.com",
         ).split(",")
     ]
+    # Force-include production origins to handle cases where the env var is stale/incomplete
+    for prod_origin in ["https://codecraze-demo.vercel.app", "https://codecraze-demo.onrender.com"]:
+        if prod_origin not in CORS_ORIGINS:
+            CORS_ORIGINS.append(prod_origin)
 
     # Parking rate (per hour) — kept configurable for future pricing module
     PARKING_RATE_PER_HOUR = float(os.getenv("PARKING_RATE_PER_HOUR", 20.0))
