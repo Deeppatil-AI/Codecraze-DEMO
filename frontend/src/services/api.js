@@ -15,7 +15,7 @@ const API = axios.create({
 // Request interceptor – attach customer auth token if available
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('parkmate_token') || localStorage.getItem('parkeasy_token');
+    const token = localStorage.getItem('parkmate_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -157,8 +157,6 @@ export const resetPassword = (data) =>
 export const logoutUser = () => {
   localStorage.removeItem('parkmate_token');
   localStorage.removeItem('parkmate_user');
-  localStorage.removeItem('parkeasy_token');
-  localStorage.removeItem('parkeasy_user');
 };
 
 

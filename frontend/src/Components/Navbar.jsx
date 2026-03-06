@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { logoutUser } from '../services/api';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -47,13 +48,12 @@ const Navbar = ({ onLoginClick }) => {
   }, []);
 
   const handleLogout = () => {
+    logoutUser(); // Clears customer token/user
     if (isAdminRoute) {
       localStorage.removeItem('parkmate_admin_user');
       localStorage.removeItem('parkmate_admin_token');
       setAdminUser(null);
     } else {
-      localStorage.removeItem('parkmate_user');
-      localStorage.removeItem('parkmate_token');
       setUser(null);
     }
     window.location.reload();
@@ -103,6 +103,8 @@ const Navbar = ({ onLoginClick }) => {
             {!isAdminRoute && (
               <Link
                 to="/admin/login"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[13px] font-semibold text-gray-500 hover:text-violet-600 transition"
               >
                 Admin
@@ -173,6 +175,8 @@ const Navbar = ({ onLoginClick }) => {
               {!isAdminRoute && (
                 <Link
                   to="/admin/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setMenuOpen(false)}
                   className="block w-full text-center text-[13px] font-semibold text-gray-500 hover:text-violet-600 mb-2"
                 >

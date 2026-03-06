@@ -41,6 +41,10 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!booking) {
+      alert("Booking information is missing. Please go back and select a slot again.");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -267,7 +271,7 @@ const PaymentForm = ({ booking, amount, onSuccess }) => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !booking}
           id="payment-confirm-btn"
           className="w-full btn-primary py-3.5 text-[14px] rounded-xl disabled:opacity-60 disabled:cursor-not-allowed"
         >

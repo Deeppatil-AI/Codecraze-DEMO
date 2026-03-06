@@ -11,12 +11,11 @@ const Payment = () => {
     const s = localStorage.getItem('parkmate_selected_slot');
     const b = localStorage.getItem('parkmate_booking');
 
-    if (s && b) {
-      setSlot(JSON.parse(s));
+    if (b) {
       setBooking(JSON.parse(b));
-    } else {
-      setSlot(null);
-      setBooking(null);
+    }
+    if (s) {
+      setSlot(JSON.parse(s));
     }
   }, []);
 
@@ -25,7 +24,7 @@ const Payment = () => {
   const totalPrice = duration && pricePerHr ? duration * pricePerHr : 0;
 
   const rows = [
-    { Icon: FaParking, bg: 'bg-violet-100', color: 'text-violet-600', label: 'Slot Number', value: slot?.slotId || 'P-001' },
+    { Icon: FaParking, bg: 'bg-violet-100', color: 'text-violet-600', label: 'Slot Number', value: slot?.slotId || booking?.slotId || 'P-001' },
     { Icon: FaMapMarkerAlt, bg: 'bg-blue-100', color: 'text-blue-600', label: 'Location', value: booking?.location || 'Downtown Parking Hub' },
     { Icon: FaClock, bg: 'bg-indigo-100', color: 'text-indigo-600', label: 'Duration', value: `${duration} hour${duration > 1 ? 's' : ''}` },
     { Icon: FaRupeeSign, bg: 'bg-emerald-100', color: 'text-emerald-600', label: 'Rate', value: `₹${pricePerHr} / hour` },

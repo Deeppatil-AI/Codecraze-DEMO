@@ -10,9 +10,11 @@ from bson import ObjectId
 from database import get_db
 from models.user_model import create_user, find_by_email, verify_password, update_password
 from utils.auth_utils import create_token
-from utils.helpers import utcnow, generate_otp, send_email
+from utils.helpers import utcnow, generate_otp
+from utils.email_service import EmailService
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+email_svc = EmailService()
 
 
 @auth_bp.route("/register/request-otp", methods=["POST"])
@@ -70,11 +72,11 @@ def register_request_otp():
             },
         )
 
-    # Send email (or log to console in dev)
-    send_email(
-        to_email=email,
-        subject="Your ParkMate signup verification code",
-        body=f"Hi {name or 'there'},\n\nYour ParkMate verification code is: {otp}\n\nThis code is valid for 10 minutes.\n",
+    # Send professional HTML email (or log to console in dev/fallback)
+    email_svc.send_otp_email(
+        recipient=email,
+        otp=otp,
+        recipient_name=name or 'there'
     )
 
     return jsonify({"message": "OTP sent to email if it exists."}), 200
@@ -192,10 +194,10 @@ def forgot_request_otp():
                 }
             },
         )
-        send_email(
-            to_email=email,
-            subject="Your ParkMate password reset code",
-            body=f"Hi {doc.get('name','there')},\n\nYour ParkMate password reset code is: {otp}\n\nThis code is valid for 10 minutes.\n",
+        email_svc.send_otp_email(
+            recipient=email,
+            otp=otp,
+            recipient_name=doc.get('name', 'there')
         )
 
     # Always respond success to avoid leaking which emails exist

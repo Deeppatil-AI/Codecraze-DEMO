@@ -5,6 +5,7 @@ import {
   FaUser, FaLayerGroup, FaParking, FaCheckCircle,
   FaArrowRight, FaRupeeSign, FaEye, FaTimes,
 } from 'react-icons/fa';
+import { bookSlot } from '../services/api';
 
 /* ──────────────────── constants ──────────────────── */
 const LOCATIONS = [
@@ -70,7 +71,6 @@ const BookSlot = () => {
           floor: slot.floor || prev.floor,
           slotId: slot.slotId || '',
         }));
-        localStorage.removeItem('parkmate_preselected_slot');
       } catch {
         // ignore
       }
@@ -85,44 +85,35 @@ const BookSlot = () => {
   const clearPreselected = () => {
     setPreselected(null);
     setForm((prev) => ({ ...prev, slotId: '' }));
+    localStorage.removeItem('parkmate_preselected_slot');
   };
 
   /* ── submit booking ── */
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try {
-      const user = JSON.parse(localStorage.getItem('parkmate_user') || '{}');
-      const token = localStorage.getItem('parkmate_token');
 
-      const payload = {
-        full_name: form.fullName,
-        vehicle_number: form.vehicleNumber,
-        date: form.date,
-        time: form.time,
-        location: form.location,
-        floor: form.floor,
-        duration: parseFloat(form.duration),
-        total: totalAmount,
-        user_id: user?._id || user?.id || '',
-        user_email: user?.email || '',
-        slot_id: preselected?.id || preselected?._id || '',
-      };
+    // Construct the booking info to pass to the payment page
+    const bookingInfo = {
+      ...form,
+      totalAmount,
+      // Ensure we have the latest slot info from preselected if available
+      slotId: preselected?.slotId || form.slotId,
+      vehicleNumber: form.vehicleNumber,
+    };
 
-      const data = await bookSlot(payload);
-
-      // Store booking info for payment page
-      localStorage.setItem('parkmate_booking', JSON.stringify({ ...form, totalAmount, bookingId: data.booking_id }));
-      if (preselected) {
-        localStorage.setItem('parkmate_selected_slot', JSON.stringify(preselected));
-      }
-
-      navigate('/payment');
-    } catch (err) {
-      alert(err.message || 'Booking failed. Please try again.');
-    } finally {
-      setSubmitting(false);
+    // Store booking info for payment page
+    localStorage.setItem('parkmate_booking', JSON.stringify(bookingInfo));
+    if (preselected) {
+      localStorage.setItem('parkmate_selected_slot', JSON.stringify(preselected));
     }
+    localStorage.removeItem('parkmate_preselected_slot');
+
+    // Redirect to payment immediately
+    setTimeout(() => {
+      setSubmitting(false);
+      navigate('/payment');
+    }, 600);
   };
 
   /* ══════════════ RENDER ══════════════ */
